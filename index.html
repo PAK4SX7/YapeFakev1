@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="orientation" content="portrait">
-  <title>Yape Fake</title>
+  <title>Yape Fake App</title>
   
-  <title>Yape Fake</title>
+  <title>Yape App</title>
 
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#790699">
@@ -114,7 +114,7 @@ if ('serviceWorker' in navigator) {
 
     /* Top Bar */
     .top-bar {
-      padding: calc(8px + env(safe-area-inset-top)) 12px 8px;
+      padding: calc(4px + env(safe-area-inset-top)) 12px 4px;  /* 🔴 REDUCIDO (era 8px) */
       display: flex;
       align-items: center;
       gap: 12px;
@@ -189,7 +189,7 @@ if ('serviceWorker' in navigator) {
 
     /* Grid */
     .grid-section {
-      padding: 10px 10px;
+      padding: 6px 10px;  /* 🔴 REDUCIDO (era 10px) */
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 10px 6px;
@@ -199,6 +199,7 @@ if ('serviceWorker' in navigator) {
       display: flex; flex-direction: column; align-items: center;
       gap: 5px; cursor: pointer; position: relative;
     }
+    /* 🔴 BOTONES DEL GRID MÁS PEQUEÑOS */
     .tile {
       width: 54px; height: 54px;
       background: white; border-radius: 12px;
@@ -206,6 +207,7 @@ if ('serviceWorker' in navigator) {
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       position: relative; overflow: hidden; padding: 8px; flex-shrink: 0;
     }
+    /* 🔴 ICONOS MÁS PEQUEÑOS */
     .tile img { 
       width: 36px; height: 36px;
       object-fit: contain; 
@@ -230,7 +232,7 @@ if ('serviceWorker' in navigator) {
 
     /* ========== CAROUSEL ========== */
     .carousel-section {
-      margin: 18px 10px 8px 8px;
+      margin: 12px 10px 8px 8px;  /* 🔴 REDUCIDO (era 18px) */
       background: transparent;
       border-radius: 12px;
       padding: 0;
