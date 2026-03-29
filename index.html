@@ -114,7 +114,7 @@ if ('serviceWorker' in navigator) {
 
     /* Top Bar */
     .top-bar {
-      padding: calc(0px + env(safe-area-inset-top)) 12px 0px;  /* 🔴 MÁS ARRIBA */
+      padding: calc(0px + env(safe-area-inset-top)) 12px 0px;
       display: flex;
       align-items: center;
       gap: 12px;
@@ -155,7 +155,7 @@ if ('serviceWorker' in navigator) {
       gap: 12px;
       flex: 1;
       cursor: pointer;
-      padding: 2px 12px;  /* 🔴 REDUCIDO (era 4px) */
+      padding: 2px 12px;
       border-radius: 12px;
       transition: background 0.2s;
       min-width: 0;
@@ -189,7 +189,7 @@ if ('serviceWorker' in navigator) {
 
     /* Grid */
     .grid-section {
-      padding: 0px 10px;  /* 🔴 REDUCIDO (era 2px) */
+      padding: 6px 10px;  /* 🔴 AUMENTADO (era 0px, ahora 6px) */
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 10px 6px;
@@ -232,7 +232,7 @@ if ('serviceWorker' in navigator) {
 
     /* ========== CAROUSEL ========== */
     .carousel-section {
-      margin: 20px 10px 8px 8px;  /* 🔴 MÁS ABAJO (era 16px, ahora 20px) */
+      margin: 26px 10px 8px 8px;  /* 🔴 MÁS ABAJO (era 20px, ahora 26px) */
       background: transparent;
       border-radius: 12px;
       padding: 0;
@@ -901,7 +901,7 @@ if ('serviceWorker' in navigator) {
         <div class="modal-content-saldo">
           <div class="modal-title-saldo">Editar saldo</div>
           <div class="input-wrapper-saldo">
-            <span class="currency-symbol-modal"> </span>
+            <span class="currency-symbol-modal">S/</span>
             <input type="text" class="amount-input-modal" id="amountInputModal" placeholder="0.00" inputmode="decimal">
           </div>
           <div class="modal-buttons-saldo">
@@ -1283,7 +1283,7 @@ if ('serviceWorker' in navigator) {
       
       // 🔴 VALIDAR QUE EL TELÉFONO TENGA EXACTAMENTE 3 DÍGITOS
       if (phone.length !== 3) {
-        showErrorModal('Debes ingresar exactamente 3 números.');
+        showErrorModal('Debes ingresar exactamente 3 números para poder yapear.');
         return;
       }
       
