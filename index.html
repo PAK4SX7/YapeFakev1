@@ -1336,6 +1336,90 @@
             background: #5e0478;
         }
 
+        /* ========== MODAL CONFIRMACIÓN DESCARGA ========== */
+        .download-confirm-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.65);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+            animation: fadeIn 0.2s ease;
+        }
+        .download-confirm-overlay.active {
+            display: flex;
+        }
+        .download-confirm-modal {
+            background: white;
+            border-radius: 20px;
+            padding: 28px 22px 22px;
+            width: 100%;
+            max-width: 310px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.45);
+            text-align: center;
+            animation: slideUpModal 0.3s ease;
+        }
+        .download-confirm-icon {
+            width: 54px;
+            height: 54px;
+            background: #f3e5f5;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 14px;
+        }
+        .download-confirm-icon svg {
+            width: 30px;
+            height: 30px;
+            fill: #790699;
+        }
+        .download-confirm-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+        .download-confirm-subtitle {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.45;
+            margin-bottom: 22px;
+        }
+        .download-confirm-buttons {
+            display: flex;
+            gap: 12px;
+        }
+        .download-confirm-btn {
+            flex: 1;
+            padding: 13px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.18s;
+        }
+        .download-confirm-btn:active {
+            transform: scale(0.97);
+        }
+        .download-confirm-cancel {
+            background: #F0F0F3;
+            color: #424242;
+        }
+        .download-confirm-accept {
+            background: #790699;
+            color: white;
+        }
+        .download-confirm-accept:active {
+            background: #5e0478;
+        }
+
         /* ========== RESPONSIVE ========== */
         @media screen and (max-width: 360px) {
             #pin-screen .input-dots {
@@ -1526,7 +1610,6 @@
     </div>
 
     <!-- ============ PANTALLA 3: MENÚ PRINCIPAL ============ -->
-    <!-- (El contenido del menú principal se mantiene igual que antes, sin cambios) -->
     <div id="main-screen" class="screen">
         <div class="app-container">
             <div class="top-bar">
@@ -1694,6 +1777,21 @@
         </div>
     </div>
 
+    <!-- ============ MODAL CONFIRMACIÓN DESCARGA ============ -->
+    <div class="download-confirm-overlay" id="downloadConfirmModal">
+        <div class="download-confirm-modal">
+            <div class="download-confirm-icon">
+                <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zm-8 2V5h2v6h1.17L12 13.17 9.83 11H11zm-6 7h14v2H5z"/></svg>
+            </div>
+            <div class="download-confirm-title">Descargar comprobante</div>
+            <div class="download-confirm-subtitle">¿Deseas descargar el comprobante de la operación?</div>
+            <div class="download-confirm-buttons">
+                <button class="download-confirm-btn download-confirm-cancel" onclick="closeDownloadConfirm()">No</button>
+                <button class="download-confirm-btn download-confirm-accept" onclick="confirmDownload()">Sí</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ========== PWA: SERVICE WORKER DINÁMICO ==========
         if ('serviceWorker' in navigator) {
@@ -1769,13 +1867,8 @@
             deferredPrompt = null;
         });
 
-        // 🔒 BLOQUEAR MENÚ CONTEXTUAL excepto canvas
+        // 🔒 BLOQUEAR MENÚ CONTEXTUAL
         document.addEventListener('contextmenu', function(e) {
-            if (e.target.id === 'receiptCanvas') {
-                e.preventDefault();
-                downloadReceipt();
-                return false;
-            }
             e.preventDefault();
             return false;
         });
@@ -1877,7 +1970,6 @@
             }, 3000);
         });
 
-        // --- Funciones para teclado físico del PIN (evitar interferencias) ---
         let pinKeydownHandler = null;
 
         function addPinKeyboardListener() {
@@ -1907,11 +1999,11 @@
             const pinScreen = document.getElementById('pin-screen');
             pinScreen.style.display = 'flex';
             setTimeout(() => pinScreen.classList.add('active', 'visible'), 10);
-            addPinKeyboardListener(); // Activar teclado físico solo cuando se muestra el PIN
+            addPinKeyboardListener();
         }
 
         function transitionToMainMenu() {
-            removePinKeyboardListener(); // Desactivar para no interferir con otros inputs
+            removePinKeyboardListener();
             const pinScreen = document.getElementById('pin-screen');
             pinScreen.style.transition = 'opacity 0.35s ease-out';
             pinScreen.style.opacity = '0';
@@ -2012,10 +2104,8 @@
         function goToSlide(i) {
             currentSlide = i;
             const track = document.getElementById('carouselTrack');
-            document.querySelectorAll('.carousel-dots .dot-nav').forEach((d, idx) => d.classList.toggle('active', idx ===
-                i));
-            const slide = document.querySelector('.carousel-slide'),
-                gap = 6;
+            document.querySelectorAll('.carousel-dots .dot-nav').forEach((d, idx) => d.classList.toggle('active', idx === i));
+            const slide = document.querySelector('.carousel-slide'), gap = 6;
             if (slide) track.style.transform = `translateX(-${i * (slide.offsetWidth + gap)}px)`;
             resetCarouselTimer();
         }
@@ -2026,29 +2116,23 @@
                 goToSlide(currentSlide); }, 5000);
         }
 
-        function resetCarouselTimer() { clearInterval(carouselInterval);
-            startCarousel(); }
+        function resetCarouselTimer() { clearInterval(carouselInterval); startCarousel(); }
 
-        let tSX = 0,
-            tEX = 0;
+        let tSX = 0, tEX = 0;
         const carouselContainer = document.querySelector('.carousel-container');
         if (carouselContainer) {
             carouselContainer.addEventListener('touchstart', e => { tSX = e.changedTouches[0].screenX; }, { passive: true });
             carouselContainer.addEventListener('touchend', e => {
                 tEX = e.changedTouches[0].screenX;
-                if (tEX < tSX - 50) { currentSlide = (currentSlide + 1) % totalSlides;
-                    goToSlide(currentSlide); }
-                if (tEX > tSX + 50) { currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
-                    goToSlide(currentSlide); }
+                if (tEX < tSX - 50) { currentSlide = (currentSlide + 1) % totalSlides; goToSlide(currentSlide); }
+                if (tEX > tSX + 50) { currentSlide = (currentSlide - 1 + totalSlides) % totalSlides; goToSlide(currentSlide); }
             }, { passive: true });
         }
 
         // ========== MODAL DE CRÉDITOS ==========
         function openCreditsModal() { document.getElementById('creditsModal').classList.add('active'); }
-
         function closeCreditsModal() { document.getElementById('creditsModal').classList.remove('active'); }
-        document.getElementById('creditsModal').addEventListener('click', function(e) { if (e.target === this)
-                closeCreditsModal(); });
+        document.getElementById('creditsModal').addEventListener('click', function(e) { if (e.target === this) closeCreditsModal(); });
 
         // ========== FORMULARIO DE YAPEO ==========
         const amountInputForm = document.getElementById('amountInputForm');
@@ -2087,25 +2171,21 @@
             }
             if (value.startsWith('.')) value = value.substring(1);
             const parts = value.split('.');
-            // Permitir hasta 9 dígitos enteros (como Yape real)
             if (parts[0].length > 9) parts[0] = parts[0].slice(0, 9);
             if (parts.length > 1 && parts[1].length > 2) parts[1] = parts[1].slice(0, 2);
             return parts.join('.');
         }
 
         function getConfigForValue(value) {
-            const parts = value.split('.'),
-                beforePoint = parts[0].length,
-                afterPoint = parts.length > 1 ? parts[1].length : 0,
-                hasDot = parts.length > 1;
+            const parts = value.split('.'), beforePoint = parts[0].length,
+                afterPoint = parts.length > 1 ? parts[1].length : 0, hasDot = parts.length > 1;
             if (hasDot && afterPoint === 0) {
                 if (beforePoint === 1) return soloPunto_1;
                 if (beforePoint === 2) return soloPunto_2;
                 if (beforePoint >= 3) return soloPunto_3;
             }
             if (hasDot && afterPoint > 0) {
-                const b = Math.min(beforePoint, 3),
-                    a = Math.min(afterPoint, 2);
+                const b = Math.min(beforePoint, 3), a = Math.min(afterPoint, 2);
                 if (b === 1 && a === 1) return conDecimal_1_1;
                 if (b === 1 && a === 2) return conDecimal_1_2;
                 if (b === 2 && a === 1) return conDecimal_2_1;
@@ -2148,8 +2228,7 @@
                     this.placeholder = '';
                     const numericValue = parseFloat(value.replace(/\./g, ''));
                     errorMessageForm.classList.toggle('hidden', numericValue > 0);
-                    const config = getConfigForValue(value),
-                        cleanValue = value.replace(/\./g, '');
+                    const config = getConfigForValue(value), cleanValue = value.replace(/\./g, '');
                     this.style.fontSize = getFontSize(cleanValue.length);
                     applySymbolConfig(config);
                 }
@@ -2202,88 +2281,39 @@
         }
 
         function closeErrorModal() { document.getElementById('errorModal').classList.remove('active'); }
-        document.getElementById('errorModal').addEventListener('click', function(e) { if (e.target === this)
-                closeErrorModal(); });
+        document.getElementById('errorModal').addEventListener('click', function(e) { if (e.target === this) closeErrorModal(); });
 
-        // ========== CONFIGURACIÓN DE TEXTOS DEL COMPROBANTE (personalizable) ==========
+        // ========== MODAL CONFIRMACIÓN DESCARGA ==========
+        function openDownloadConfirm() {
+            document.getElementById('downloadConfirmModal').classList.add('active');
+        }
+
+        function closeDownloadConfirm() {
+            document.getElementById('downloadConfirmModal').classList.remove('active');
+        }
+
+        function confirmDownload() {
+            closeDownloadConfirm();
+            downloadReceipt();
+        }
+
+        document.getElementById('downloadConfirmModal').addEventListener('click', function(e) {
+            if (e.target === this) closeDownloadConfirm();
+        });
+
+        // ========== CONFIGURACIÓN DE TEXTOS DEL COMPROBANTE ==========
         const RECEIPT_CONFIG = {
-            currency: { // SÍMBOLO DE MONEDA "S/"
-                x: 200, 
-                y: 1335, 
-                fontSize: 173, 
-                color: '#3E3854', 
-                font: 'bold' 
-            },
-            amount: { // MONTO
-                x: 395, 
-                y: 1400, 
-                fontSize: 272, 
-                color: '#3E3854', 
-                font: 'bold' 
-            },
-            name: { //NOMBRE
-                x: 205, 
-                y: 1560, 
-                fontSize: 120, 
-                color: '#3E3854', 
-                font: 'bold' 
-            },
-            date: { // DIA/MES/AÑO
-                x: 300, 
-                y: 1695, 
-                fontSize: 79, 
-                color: '#605D64', 
-                font: 'bold' 
-            },
-            time: { // HORA
-                x: 1030, 
-                y: 1695, 
-                fontSize: 79, 
-                color: '#605D64', 
-                font: 'bold' 
-            },
-            random1: { // CODIGO DE SEGURIDAD: NUMERO 1
-                x: 1610, 
-                y: 2003, 
-                fontSize: 105, 
-                color: '#3E3854', 
-                font: 'bold' 
-            },
-            random2: { // CODIGO DE SEGURIDAD: NUMERO 2
-                x: 1780, 
-                y: 2003, 
-                fontSize: 105, 
-                color: '#3E3854', 
-                font: 'bold' 
-            },
-            random3: { // CODIGO DE SEGURIDAD: NUMERO 3
-                x: 1950, 
-                y: 2003, 
-                fontSize: 105, 
-                color: '#3E3854', 
-                font: 'bold' 
-            },
-            phone: { // TELÉFONO
-                x: 1695, 
-                y: 2475, 
-                fontSize: 74, 
-                color: '#3E3854', 
-                font: 'bold' 
-            },
-            yapeText: { // TEXTO "YAPE"
-                x: 1890, 
-                y: 2620, 
-                fontSize: 74, 
-                color: '#3E3854', 
-                font: 'bold' 
-            },
-            operationCode: { // CÓDIGO DE OPERACIÓN
-                x: 1730, 
-                y: 2775, 
-                fontSize: 74, 
-                color: '#3E3854', 
-                font: 'bold' 
-            },
+            currency: { x: 200, y: 1335, fontSize: 173, color: '#3E3854', font: 'bold' },
+            amount: { x: 395, y: 1400, fontSize: 272, color: '#3E3854', font: 'bold' },
+            name: { x: 205, y: 1560, fontSize: 120, color: '#3E3854', font: 'bold' },
+            date: { x: 300, y: 1695, fontSize: 79, color: '#605D64', font: 'bold' },
+            time: { x: 1030, y: 1695, fontSize: 79, color: '#605D64', font: 'bold' },
+            random1: { x: 1610, y: 2003, fontSize: 105, color: '#3E3854', font: 'bold' },
+            random2: { x: 1780, y: 2003, fontSize: 105, color: '#3E3854', font: 'bold' },
+            random3: { x: 1950, y: 2003, fontSize: 105, color: '#3E3854', font: 'bold' },
+            phone: { x: 1695, y: 2475, fontSize: 74, color: '#3E3854', font: 'bold' },
+            yapeText: { x: 1890, y: 2620, fontSize: 74, color: '#3E3854', font: 'bold' },
+            operationCode: { x: 1730, y: 2775, fontSize: 74, color: '#3E3854', font: 'bold' },
             fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
         };
 
@@ -2344,49 +2374,40 @@
                 const cfg = RECEIPT_CONFIG;
                 const fontFam = cfg.fontFamily;
 
-                // Símbolo "S/"
                 ctx.font = `${cfg.currency.font} ${cfg.currency.fontSize}px ${fontFam}`;
                 ctx.fillStyle = cfg.currency.color;
                 ctx.fillText(currencySymbol, cfg.currency.x, cfg.currency.y);
 
-                // Monto
                 ctx.font = `${cfg.amount.font} ${cfg.amount.fontSize}px ${fontFam}`;
                 ctx.fillStyle = cfg.amount.color;
                 ctx.fillText(amountNumber, cfg.amount.x, cfg.amount.y);
 
-                // Nombre
                 ctx.font = `${cfg.name.font} ${cfg.name.fontSize}px ${fontFam}`;
                 ctx.fillStyle = cfg.name.color;
                 ctx.fillText(name, cfg.name.x, cfg.name.y);
 
-                // Fecha
                 ctx.font = `${cfg.date.font} ${cfg.date.fontSize}px ${fontFam}`;
                 ctx.fillStyle = cfg.date.color;
                 ctx.fillText(formattedDate, cfg.date.x, cfg.date.y);
 
-                // Hora
                 ctx.font = `${cfg.time.font} ${cfg.time.fontSize}px ${fontFam}`;
                 ctx.fillStyle = cfg.time.color;
                 ctx.fillText(formattedTime, cfg.time.x, cfg.time.y);
 
-                // Números aleatorios
                 ctx.font = `${cfg.random1.font} ${cfg.random1.fontSize}px ${fontFam}`;
                 ctx.fillStyle = cfg.random1.color;
                 ctx.fillText(rand1.toString(), cfg.random1.x, cfg.random1.y);
                 ctx.fillText(rand2.toString(), cfg.random2.x, cfg.random2.y);
                 ctx.fillText(rand3.toString(), cfg.random3.x, cfg.random3.y);
 
-                // Teléfono
                 ctx.font = `${cfg.phone.font} ${cfg.phone.fontSize}px ${fontFam}`;
                 ctx.fillStyle = cfg.phone.color;
                 ctx.fillText(formattedPhone, cfg.phone.x, cfg.phone.y);
 
-                // "Yape"
                 ctx.font = `${cfg.yapeText.font} ${cfg.yapeText.fontSize}px ${fontFam}`;
                 ctx.fillStyle = cfg.yapeText.color;
                 ctx.fillText('Yape', cfg.yapeText.x, cfg.yapeText.y);
 
-                // Código de operación
                 ctx.font = `${cfg.operationCode.font} ${cfg.operationCode.fontSize}px ${fontFam}`;
                 ctx.fillStyle = cfg.operationCode.color;
                 ctx.fillText(operationCode, cfg.operationCode.x, cfg.operationCode.y);
@@ -2415,19 +2436,29 @@
             showScreen('main-screen');
         }
 
+        // ========== LONG PRESS EN COMPROBANTE → MODAL CONFIRMACIÓN ==========
         let longPressTimer;
-        let downloadTriggered = false;
+        let longPressTriggered = false;
         const receiptCanvasEl = document.getElementById('receiptCanvas');
+
         receiptCanvasEl.addEventListener('touchstart', function(e) {
-            downloadTriggered = false;
-            longPressTimer = setTimeout(() => { downloadTriggered = true;
-                downloadReceipt(); }, 600);
+            longPressTriggered = false;
+            longPressTimer = setTimeout(() => {
+                longPressTriggered = true;
+                openDownloadConfirm();
+            }, 600);
         });
+
         receiptCanvasEl.addEventListener('touchend', function(e) {
             clearTimeout(longPressTimer);
-            if (!downloadTriggered) { goBackToMenu(); }
+            if (!longPressTriggered) {
+                goBackToMenu();
+            }
         });
-        receiptCanvasEl.addEventListener('touchmove', function(e) { clearTimeout(longPressTimer); });
+
+        receiptCanvasEl.addEventListener('touchmove', function(e) {
+            clearTimeout(longPressTimer);
+        });
 
         document.getElementById('btnYapearMain').addEventListener('click', () => showScreen('form-screen'));
         document.getElementById('btnBackForm').addEventListener('click', () => showScreen('main-screen'));
@@ -2464,7 +2495,7 @@
             let toastTimer = null;
             const STORAGE_KEY_PIN = 'yapePinV2';
 
-            window.isProcessingPIN = false; // Para control externo
+            window.isProcessingPIN = false;
 
             function getSavedPin() {
                 try { return localStorage.getItem(STORAGE_KEY_PIN); } catch (e) { return null; }
@@ -2490,8 +2521,7 @@
                     keyDiv.textContent = digit;
                     keyDiv.setAttribute('data-digit', digit);
                     keyDiv.addEventListener('click', () => pressKey(digit.toString()));
-                    keyDiv.addEventListener('touchend', (e) => { e.preventDefault();
-                        pressKey(digit.toString()); });
+                    keyDiv.addEventListener('touchend', (e) => { e.preventDefault(); pressKey(digit.toString()); });
                     fragment.appendChild(keyDiv);
                 });
                 const emptyDiv = document.createElement('div');
@@ -2501,16 +2531,13 @@
                 zeroDiv.className = 'key key-zero';
                 zeroDiv.textContent = '0';
                 zeroDiv.addEventListener('click', () => pressKey('0'));
-                zeroDiv.addEventListener('touchend', (e) => { e.preventDefault();
-                    pressKey('0'); });
+                zeroDiv.addEventListener('touchend', (e) => { e.preventDefault(); pressKey('0'); });
                 fragment.appendChild(zeroDiv);
                 const deleteDiv = document.createElement('div');
                 deleteDiv.className = 'key-delete';
-                deleteDiv.innerHTML =
-                    '<svg class="delete-icon" viewBox="0 0 24 24"><path d="M22,3H7C6.31,3 5.77,3.35 5.41,3.88L0,12L5.41,20.11C5.77,20.64 6.31,21 7,21H22A2,2 0 0,0 24,19V5A2,2 0 0,0 22,3M19,15.59L17.59,17L14,13.41L10.41,17L9,15.59L12.59,12L9,8.41L10.41,7L14,10.59L17.59,7L19,8.41L15.41,12L19,15.59Z" /></svg>';
+                deleteDiv.innerHTML = '<svg class="delete-icon" viewBox="0 0 24 24"><path d="M22,3H7C6.31,3 5.77,3.35 5.41,3.88L0,12L5.41,20.11C5.77,20.64 6.31,21 7,21H22A2,2 0 0,0 24,19V5A2,2 0 0,0 22,3M19,15.59L17.59,17L14,13.41L10.41,17L9,15.59L12.59,12L9,8.41L10.41,7L14,10.59L17.59,7L19,8.41L15.41,12L19,15.59Z" /></svg>';
                 deleteDiv.addEventListener('click', deleteKey);
-                deleteDiv.addEventListener('touchend', (e) => { e.preventDefault();
-                    deleteKey(); });
+                deleteDiv.addEventListener('touchend', (e) => { e.preventDefault(); deleteKey(); });
                 fragment.appendChild(deleteDiv);
                 keypadContainer.innerHTML = '';
                 keypadContainer.appendChild(fragment);
@@ -2556,8 +2583,7 @@
                 if (type === 'error') toast.classList.add('error-toast');
                 void toast.offsetWidth;
                 toast.classList.add('show');
-                toastTimer = setTimeout(() => { toast.classList.remove('show');
-                    toastTimer = null; }, 2200);
+                toastTimer = setTimeout(() => { toast.classList.remove('show'); toastTimer = null; }, 2200);
             }
 
             function setSubtitle(text, type) {
@@ -2681,9 +2707,7 @@
                                 updateStepIndicator();
                             });
                             updateDots();
-                            setTimeout(() => { isProcessing = false;
-                                window.isProcessingPIN = false;
-                                resetSubtitle(); }, 1500);
+                            setTimeout(() => { isProcessing = false; window.isProcessingPIN = false; resetSubtitle(); }, 1500);
                         }
                     } else {
                         setAllDotsClass('error-dot');
@@ -2700,9 +2724,7 @@
                             updateStepIndicator();
                         });
                         updateDots();
-                        setTimeout(() => { isProcessing = false;
-                            window.isProcessingPIN = false;
-                            resetSubtitle(); }, 1600);
+                        setTimeout(() => { isProcessing = false; window.isProcessingPIN = false; resetSubtitle(); }, 1600);
                     }
                 } else if (state === 'login') {
                     const savedPin = getSavedPin();
@@ -2728,9 +2750,7 @@
                         showToast('Clave incorrecta', 'error');
                         currentPin = '';
                         updateDots();
-                        setTimeout(() => { resetSubtitle();
-                            isProcessing = false;
-                            window.isProcessingPIN = false; }, 1400);
+                        setTimeout(() => { resetSubtitle(); isProcessing = false; window.isProcessingPIN = false; }, 1400);
                     }
                 }
             }
@@ -2782,7 +2802,6 @@
                 updateDots();
                 isProcessing = false;
                 window.isProcessingPIN = false;
-                // Ya no se registra keydown global aquí; se maneja con addPinKeyboardListener/remove
             }
 
             window.pressKey = pressKey;
