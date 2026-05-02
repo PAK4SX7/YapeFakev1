@@ -1526,6 +1526,7 @@
     </div>
 
     <!-- ============ PANTALLA 3: MENÚ PRINCIPAL ============ -->
+    <!-- (El contenido del menú principal se mantiene igual que antes, sin cambios) -->
     <div id="main-screen" class="screen">
         <div class="app-container">
             <div class="top-bar">
@@ -1835,27 +1836,22 @@
             const carouselSection = document.getElementById('carouselSection');
             const bottomPanel = document.getElementById('bottomPanel');
 
-            // Resetear animaciones
             gridItems.forEach(item => item.classList.remove('animate-in'));
             if (carouselSection) carouselSection.classList.remove('animate-in');
             if (bottomPanel) bottomPanel.classList.remove('animate-in');
 
-            // Forzar reflow
             void document.getElementById('main-screen').offsetWidth;
 
-            // Grid items: aparecen desde abajo con stagger
             gridItems.forEach((item, index) => {
                 item.style.animationDelay = (index * 0.04) + 's';
                 item.classList.add('animate-in');
             });
 
-            // Carrusel: aparece desde la derecha
             if (carouselSection) {
                 carouselSection.style.animationDelay = '0.5s';
                 carouselSection.classList.add('animate-in');
             }
 
-            // Bottom panel: slide up
             if (bottomPanel) {
                 bottomPanel.style.animationDelay = '0.65s';
                 bottomPanel.classList.add('animate-in');
@@ -1869,7 +1865,6 @@
             splash.classList.add('visible');
             setTimeout(() => { splash.classList.add('active'); }, 50);
 
-            // Después de 3 segundos, transicionar a la pantalla de PIN
             setTimeout(() => {
                 splash.style.transition = 'opacity 0.4s ease-out';
                 splash.style.opacity = '0';
@@ -1877,21 +1872,46 @@
                     splash.classList.remove('active', 'visible');
                     splash.style.opacity = '1';
                     splash.style.transition = '';
-                    // Mostrar pantalla de PIN directamente
                     showPinScreen();
                 }, 400);
             }, 3000);
         });
 
+        // --- Funciones para teclado físico del PIN (evitar interferencias) ---
+        let pinKeydownHandler = null;
+
+        function addPinKeyboardListener() {
+            if (pinKeydownHandler) return;
+            pinKeydownHandler = function(e) {
+                if (isProcessingPIN) return;
+                const key = e.key;
+                if (/^[0-9]$/.test(key)) {
+                    e.preventDefault();
+                    pressKey(key);
+                } else if (key === 'Backspace' || key === 'Delete') {
+                    e.preventDefault();
+                    deleteKey();
+                }
+            };
+            document.addEventListener('keydown', pinKeydownHandler);
+        }
+
+        function removePinKeyboardListener() {
+            if (pinKeydownHandler) {
+                document.removeEventListener('keydown', pinKeydownHandler);
+                pinKeydownHandler = null;
+            }
+        }
+
         function showPinScreen() {
             const pinScreen = document.getElementById('pin-screen');
             pinScreen.style.display = 'flex';
             setTimeout(() => pinScreen.classList.add('active', 'visible'), 10);
-            // El código del PIN ya inicializa todo internamente
+            addPinKeyboardListener(); // Activar teclado físico solo cuando se muestra el PIN
         }
 
-        // ========== FUNCIÓN LLAMADA CUANDO EL PIN ES EXITOSO ==========
         function transitionToMainMenu() {
+            removePinKeyboardListener(); // Desactivar para no interferir con otros inputs
             const pinScreen = document.getElementById('pin-screen');
             pinScreen.style.transition = 'opacity 0.35s ease-out';
             pinScreen.style.opacity = '0';
@@ -2009,7 +2029,6 @@
         function resetCarouselTimer() { clearInterval(carouselInterval);
             startCarousel(); }
 
-        // Swipe carrusel
         let tSX = 0,
             tEX = 0;
         const carouselContainer = document.querySelector('.carousel-container');
@@ -2052,18 +2071,24 @@
             '3': { posX: -240, posY: 5, fontSize: 30, scale: 0.9 },
             '4': { posX: -260, posY: 5, fontSize: 30, scale: 0.8 },
             '5': { posX: -280, posY: 5, fontSize: 30, scale: 0.8 },
-            '6': { posX: -300, posY: 5, fontSize: 30, scale: 0.8 }
+            '6': { posX: -300, posY: 5, fontSize: 30, scale: 0.75 },
+            '7': { posX: -310, posY: 5, fontSize: 30, scale: 0.7 },
+            '8': { posX: -318, posY: 5, fontSize: 30, scale: 0.65 },
+            '9': { posX: -324, posY: 5, fontSize: 30, scale: 0.6 }
         };
         const soloPuntoConfig = { posX: -160, posY: 5, fontSize: 30, scale: 1 };
 
         function sanitizeInput(value) {
             value = value.replace(/[^0-9.]/g, '');
             const dotCount = (value.match(/\./g) || []).length;
-            if (dotCount > 1) { const p = value.split('.');
-                value = p[0] + '.' + p.slice(1).join(''); }
+            if (dotCount > 1) {
+                const p = value.split('.');
+                value = p[0] + '.' + p.slice(1).join('');
+            }
             if (value.startsWith('.')) value = value.substring(1);
             const parts = value.split('.');
-            if (parts[0].length > 3) parts[0] = parts[0].slice(0, 3);
+            // Permitir hasta 9 dígitos enteros (como Yape real)
+            if (parts[0].length > 9) parts[0] = parts[0].slice(0, 9);
             if (parts.length > 1 && parts[1].length > 2) parts[1] = parts[1].slice(0, 2);
             return parts.join('.');
         }
@@ -2089,7 +2114,7 @@
                 if (b === 3 && a === 2) return conDecimal_3_2;
             }
             if (beforePoint === 0) return symbolConfigEnteros['0'];
-            if (beforePoint >= 6) return symbolConfigEnteros['6'];
+            if (beforePoint >= 9) return symbolConfigEnteros['9'];
             return symbolConfigEnteros[String(beforePoint)] || symbolConfigEnteros['0'];
         }
 
@@ -2105,7 +2130,10 @@
             if (totalLength === 3) return '50px';
             if (totalLength === 4) return '45px';
             if (totalLength === 5) return '40px';
-            return '35px';
+            if (totalLength === 6) return '36px';
+            if (totalLength === 7) return '32px';
+            if (totalLength === 8) return '28px';
+            return '25px';
         }
 
         if (amountInputForm) {
@@ -2136,17 +2164,18 @@
                     this.style.fontSize = '60px';
                 }
             });
-            amountInputForm.addEventListener('focus', function() { if (this.placeholder === '0' && this.value === '')
-                    this.value = ''; });
+            amountInputForm.addEventListener('focus', function() {
+                if (this.placeholder === '0' && this.value === '') this.value = '';
+            });
         }
 
         const phoneInput = document.getElementById('phoneInput');
         if (phoneInput) {
-            phoneInput.addEventListener('input', function(e) { this.value = this.value.replace(/[^0-9]/g, '').slice(0,
-                3); });
+            phoneInput.addEventListener('input', function(e) {
+                this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3);
+            });
         }
 
-        // Validación formulario y generación comprobante
         document.getElementById('btnYapearForm').addEventListener('click', () => {
             const name = document.getElementById('recipientName').value.trim();
             const amount = document.getElementById('amountInputForm').value.trim();
@@ -2167,7 +2196,6 @@
             generateReceipt();
         });
 
-        // ========== MODAL DE ERROR ==========
         function showErrorModal(message) {
             document.getElementById('errorMessageText').textContent = message;
             document.getElementById('errorModal').classList.add('active');
@@ -2177,7 +2205,88 @@
         document.getElementById('errorModal').addEventListener('click', function(e) { if (e.target === this)
                 closeErrorModal(); });
 
-        // ========== GENERACIÓN DE COMPROBANTE (CANVAS) ==========
+        // ========== CONFIGURACIÓN DE TEXTOS DEL COMPROBANTE (personalizable) ==========
+        const RECEIPT_CONFIG = {
+            currency: { // SÍMBOLO DE MONEDA "S/"
+                x: 200, 
+                y: 1335, 
+                fontSize: 173, 
+                color: '#3E3854', 
+                font: 'bold' 
+            },
+            amount: { // MONTO
+                x: 395, 
+                y: 1400, 
+                fontSize: 272, 
+                color: '#3E3854', 
+                font: 'bold' 
+            },
+            name: { //NOMBRE
+                x: 205, 
+                y: 1560, 
+                fontSize: 120, 
+                color: '#3E3854', 
+                font: 'bold' 
+            },
+            date: { // DIA/MES/AÑO
+                x: 300, 
+                y: 1695, 
+                fontSize: 79, 
+                color: '#605D64', 
+                font: 'bold' 
+            },
+            time: { // HORA
+                x: 1030, 
+                y: 1695, 
+                fontSize: 79, 
+                color: '#605D64', 
+                font: 'bold' 
+            },
+            random1: { // CODIGO DE SEGURIDAD: NUMERO 1
+                x: 1610, 
+                y: 2003, 
+                fontSize: 105, 
+                color: '#3E3854', 
+                font: 'bold' 
+            },
+            random2: { // CODIGO DE SEGURIDAD: NUMERO 2
+                x: 1780, 
+                y: 2003, 
+                fontSize: 105, 
+                color: '#3E3854', 
+                font: 'bold' 
+            },
+            random3: { // CODIGO DE SEGURIDAD: NUMERO 3
+                x: 1950, 
+                y: 2003, 
+                fontSize: 105, 
+                color: '#3E3854', 
+                font: 'bold' 
+            },
+            phone: { // TELÉFONO
+                x: 1695, 
+                y: 2475, 
+                fontSize: 74, 
+                color: '#3E3854', 
+                font: 'bold' 
+            },
+            yapeText: { // TEXTO "YAPE"
+                x: 1890, 
+                y: 2620, 
+                fontSize: 74, 
+                color: '#3E3854', 
+                font: 'bold' 
+            },
+            operationCode: { // CÓDIGO DE OPERACIÓN
+                x: 1730, 
+                y: 2775, 
+                fontSize: 74, 
+                color: '#3E3854', 
+                font: 'bold' 
+            },
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+        };
+
         function generateReceipt() {
             const name = document.getElementById('recipientName').value.trim();
             const amount = document.getElementById('amountInputForm').value;
@@ -2211,14 +2320,12 @@
                 const ctx = canvas.getContext('2d');
                 const dpr = window.devicePixelRatio || 1;
 
-                // Usar resolución nativa para máxima nitidez
                 canvas.width = window.innerWidth * dpr;
                 canvas.height = window.innerHeight * dpr;
                 canvas.style.width = window.innerWidth + 'px';
                 canvas.style.height = window.innerHeight + 'px';
                 ctx.scale(dpr, dpr);
 
-                // Activar suavizado de alta calidad
                 ctx.imageSmoothingEnabled = true;
                 ctx.imageSmoothingQuality = 'high';
 
@@ -2234,53 +2341,61 @@
                 ctx.translate(offsetX, offsetY);
                 ctx.scale(scale, scale);
 
+                const cfg = RECEIPT_CONFIG;
+                const fontFam = cfg.fontFamily;
+
                 // Símbolo "S/"
-                ctx.font = 'bold 175px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-                ctx.fillStyle = '#3E3854';
-                ctx.fillText(currencySymbol, 200, 1220);
+                ctx.font = `${cfg.currency.font} ${cfg.currency.fontSize}px ${fontFam}`;
+                ctx.fillStyle = cfg.currency.color;
+                ctx.fillText(currencySymbol, cfg.currency.x, cfg.currency.y);
 
                 // Monto
-                ctx.font = 'bold 268px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-                ctx.fillStyle = '#3E3854';
-                ctx.fillText(amountNumber, 395, 1205);
+                ctx.font = `${cfg.amount.font} ${cfg.amount.fontSize}px ${fontFam}`;
+                ctx.fillStyle = cfg.amount.color;
+                ctx.fillText(amountNumber, cfg.amount.x, cfg.amount.y);
 
                 // Nombre
-                ctx.font = 'bold 120px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-                ctx.fillStyle = '#3E3854';
-                ctx.fillText(name, 205, 1465);
+                ctx.font = `${cfg.name.font} ${cfg.name.fontSize}px ${fontFam}`;
+                ctx.fillStyle = cfg.name.color;
+                ctx.fillText(name, cfg.name.x, cfg.name.y);
 
                 // Fecha
-                ctx.font = 'bold 79px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-                ctx.fillStyle = '#605D64';
-                ctx.fillText(formattedDate, 300, 1635);
+                ctx.font = `${cfg.date.font} ${cfg.date.fontSize}px ${fontFam}`;
+                ctx.fillStyle = cfg.date.color;
+                ctx.fillText(formattedDate, cfg.date.x, cfg.date.y);
 
                 // Hora
-                ctx.fillText(formattedTime, 1030, 1635);
+                ctx.font = `${cfg.time.font} ${cfg.time.fontSize}px ${fontFam}`;
+                ctx.fillStyle = cfg.time.color;
+                ctx.fillText(formattedTime, cfg.time.x, cfg.time.y);
 
                 // Números aleatorios
-                ctx.font = 'bold 105px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-                ctx.fillStyle = '#3E3854';
-                ctx.fillText(rand1.toString(), 1610, 1920);
-                ctx.fillText(rand2.toString(), 1780, 1920);
-                ctx.fillText(rand3.toString(), 1950, 1920);
+                ctx.font = `${cfg.random1.font} ${cfg.random1.fontSize}px ${fontFam}`;
+                ctx.fillStyle = cfg.random1.color;
+                ctx.fillText(rand1.toString(), cfg.random1.x, cfg.random1.y);
+                ctx.fillText(rand2.toString(), cfg.random2.x, cfg.random2.y);
+                ctx.fillText(rand3.toString(), cfg.random3.x, cfg.random3.y);
 
                 // Teléfono
-                ctx.font = 'bold 74px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-                ctx.fillStyle = '#3E3854';
-                ctx.fillText(formattedPhone, 1695, 2420);
+                ctx.font = `${cfg.phone.font} ${cfg.phone.fontSize}px ${fontFam}`;
+                ctx.fillStyle = cfg.phone.color;
+                ctx.fillText(formattedPhone, cfg.phone.x, cfg.phone.y);
 
                 // "Yape"
-                ctx.fillText('Yape', 1890, 2565);
+                ctx.font = `${cfg.yapeText.font} ${cfg.yapeText.fontSize}px ${fontFam}`;
+                ctx.fillStyle = cfg.yapeText.color;
+                ctx.fillText('Yape', cfg.yapeText.x, cfg.yapeText.y);
 
                 // Código de operación
-                ctx.fillText(operationCode, 1730, 2720);
+                ctx.font = `${cfg.operationCode.font} ${cfg.operationCode.fontSize}px ${fontFam}`;
+                ctx.fillStyle = cfg.operationCode.color;
+                ctx.fillText(operationCode, cfg.operationCode.x, cfg.operationCode.y);
 
                 ctx.restore();
                 showScreen('receipt-screen');
             };
         }
 
-        // ========== DESCARGAR COMPROBANTE ==========
         function downloadReceipt() {
             const canvas = document.getElementById('receiptCanvas');
             if (!canvas) return;
@@ -2293,7 +2408,6 @@
             document.body.removeChild(link);
         }
 
-        // ========== VOLVER AL MENÚ ==========
         function goBackToMenu() {
             document.getElementById('recipientName').value = '';
             document.getElementById('amountInputForm').value = '';
@@ -2301,25 +2415,23 @@
             showScreen('main-screen');
         }
 
-        // ========== MANEJO DE TOQUES EN COMPROBANTE ==========
         let longPressTimer;
         let downloadTriggered = false;
-        const receiptCanvas = document.getElementById('receiptCanvas');
-        receiptCanvas.addEventListener('touchstart', function(e) {
+        const receiptCanvasEl = document.getElementById('receiptCanvas');
+        receiptCanvasEl.addEventListener('touchstart', function(e) {
             downloadTriggered = false;
             longPressTimer = setTimeout(() => { downloadTriggered = true;
                 downloadReceipt(); }, 600);
         });
-        receiptCanvas.addEventListener('touchend', function(e) {
+        receiptCanvasEl.addEventListener('touchend', function(e) {
             clearTimeout(longPressTimer);
             if (!downloadTriggered) { goBackToMenu(); }
         });
-        receiptCanvas.addEventListener('touchmove', function(e) { clearTimeout(longPressTimer); });
+        receiptCanvasEl.addEventListener('touchmove', function(e) { clearTimeout(longPressTimer); });
 
         document.getElementById('btnYapearMain').addEventListener('click', () => showScreen('form-screen'));
         document.getElementById('btnBackForm').addEventListener('click', () => showScreen('main-screen'));
 
-        // Prevención de gestos
         document.addEventListener('gesturestart', e => e.preventDefault());
         document.addEventListener('gesturechange', e => e.preventDefault());
         document.addEventListener('gestureend', e => e.preventDefault());
@@ -2351,6 +2463,8 @@
             let isProcessing = false;
             let toastTimer = null;
             const STORAGE_KEY_PIN = 'yapePinV2';
+
+            window.isProcessingPIN = false; // Para control externo
 
             function getSavedPin() {
                 try { return localStorage.getItem(STORAGE_KEY_PIN); } catch (e) { return null; }
@@ -2514,6 +2628,7 @@
             function handleComplete() {
                 if (isProcessing) return;
                 isProcessing = true;
+                window.isProcessingPIN = true;
 
                 if (state === 'create-step1') {
                     tempPin = currentPin;
@@ -2526,6 +2641,7 @@
                     });
                     updateDots();
                     isProcessing = false;
+                    window.isProcessingPIN = false;
                 } else if (state === 'create-step2') {
                     if (currentPin === tempPin) {
                         const saved = savePin(currentPin);
@@ -2547,7 +2663,7 @@
                                     updateStepIndicator();
                                 });
                                 isProcessing = false;
-                                // Transicionar al menú principal
+                                window.isProcessingPIN = false;
                                 setTimeout(() => transitionToMainMenu(), 800);
                             }, 1600);
                         } else {
@@ -2566,6 +2682,7 @@
                             });
                             updateDots();
                             setTimeout(() => { isProcessing = false;
+                                window.isProcessingPIN = false;
                                 resetSubtitle(); }, 1500);
                         }
                     } else {
@@ -2584,6 +2701,7 @@
                         });
                         updateDots();
                         setTimeout(() => { isProcessing = false;
+                            window.isProcessingPIN = false;
                             resetSubtitle(); }, 1600);
                     }
                 } else if (state === 'login') {
@@ -2599,7 +2717,7 @@
                         setTimeout(() => {
                             resetSubtitle();
                             isProcessing = false;
-                            // Transicionar al menú principal
+                            window.isProcessingPIN = false;
                             transitionToMainMenu();
                         }, 1200);
                     } else {
@@ -2611,7 +2729,8 @@
                         currentPin = '';
                         updateDots();
                         setTimeout(() => { resetSubtitle();
-                            isProcessing = false; }, 1400);
+                            isProcessing = false;
+                            window.isProcessingPIN = false; }, 1400);
                     }
                 }
             }
@@ -2644,14 +2763,6 @@
                 }
             }
 
-            function handlePhysicalKeydown(e) {
-                if (isProcessing) return;
-                const key = e.key;
-                if (/^[0-9]$/.test(key)) { e.preventDefault();
-                    pressKey(key); } else if (key === 'Backspace' || key === 'Delete') { e.preventDefault();
-                    deleteKey(); }
-            }
-
             function initPin() {
                 buildKeypad();
                 const savedPin = getSavedPin();
@@ -2670,10 +2781,10 @@
                 tempPin = '';
                 updateDots();
                 isProcessing = false;
-                document.addEventListener('keydown', handlePhysicalKeydown);
+                window.isProcessingPIN = false;
+                // Ya no se registra keydown global aquí; se maneja con addPinKeyboardListener/remove
             }
 
-            // Exponer funciones globales para compatibilidad
             window.pressKey = pressKey;
             window.deleteKey = deleteKey;
             initPin();
