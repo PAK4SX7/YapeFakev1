@@ -1,1548 +1,2683 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="orientation" content="portrait">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="orientation" content="portrait">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Yape">
+    <link rel="apple-touch-icon" href="https://vectorseek.com/wp-content/uploads/2023/09/Yape-Logo-Vector.svg-.png">
+    <link rel="icon" type="image/png" href="https://vectorseek.com/wp-content/uploads/2023/09/Yape-Logo-Vector.svg-.png">
+    <link rel="shortcut icon" type="image/png" href="https://vectorseek.com/wp-content/uploads/2023/09/Yape-Logo-Vector.svg-.png">
+    <title>Yape</title>
+    <meta name="theme-color" content="#790699">
 
-  <!-- ✅ PWA: FULL SCREEN SIN BARRA DEL NAVEGADOR -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Yape">
+    <style>
+        /* ========== RESET GLOBAL ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+        input,
+        textarea {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+        html,
+        body {
+            overflow-x: hidden;
+            overflow-y: hidden;
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            position: relative;
+            min-height: 100vh;
+            min-height: 100dvh;
+            background: #000;
+        }
 
-  <!-- ✅ ICONO PARA PANTALLA DE INICIO (logo oficial) -->
-  <link rel="apple-touch-icon" href="https://vectorseek.com/wp-content/uploads/2023/09/Yape-Logo-Vector.svg-.png">
-  <link rel="icon" type="image/png" href="https://vectorseek.com/wp-content/uploads/2023/09/Yape-Logo-Vector.svg-.png">
-  <link rel="shortcut icon" type="image/png" href="https://vectorseek.com/wp-content/uploads/2023/09/Yape-Logo-Vector.svg-.png">
+        /* ========== SISTEMA DE PANTALLAS ========== */
+        .screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .screen.active {
+            display: flex;
+            opacity: 1;
+            z-index: 20;
+            pointer-events: all;
+        }
+        .screen.visible {
+            display: flex;
+        }
 
-  <title>Yape</title>
+        /* ========== SPLASH SCREEN ========== */
+        #splash-screen {
+            background: #000;
+            align-items: center;
+            justify-content: center;
+        }
+        #splash-screen img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            opacity: 0;
+            transform: scale(0.3) translateY(50px);
+            transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: none;
+        }
+        #splash-screen.active img {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
 
-  <meta name="theme-color" content="#790699">
+        /* ========== PANTALLA PIN ========== */
+        #pin-screen {
+            background-color: #742284;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: clamp(40px, 10vh, 80px);
+            padding-bottom: clamp(20px, 5vh, 40px);
+            overflow: hidden;
+            transition: background-color 0.5s ease;
+        }
+        #pin-screen .header-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            padding: 0 20px;
+        }
+        #pin-screen .lock-icon-container {
+            position: relative;
+            width: 80px;
+            height: 90px;
+            margin-bottom: clamp(20px, 3vh, 25px);
+            display: flex;
+            justify-content: center;
+            transition: transform 0.3s ease;
+        }
+        #pin-screen .lock-icon-container.unlocked {
+            transform: scale(1.05);
+        }
+        #pin-screen .lock-body {
+            width: 64px;
+            height: 56px;
+            background-color: #B07BC4;
+            border-radius: 8px;
+            position: absolute;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.5s ease;
+        }
+        #pin-screen .lock-body.success-lock {
+            background-color: #00D4B8;
+            box-shadow: 0 0 20px rgba(0, 212, 184, 0.6);
+        }
+        #pin-screen .lock-body.error-lock {
+            background-color: #FF6B6B;
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.6);
+        }
+        #pin-screen .lock-shackle {
+            width: 40px;
+            height: 40px;
+            border: 8px solid #965DB0;
+            border-bottom: none;
+            border-radius: 20px 20px 0 0;
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: border-color 0.5s ease, transform 0.4s ease;
+            transform-origin: bottom center;
+        }
+        #pin-screen .lock-shackle.success-shackle {
+            border-color: #00D4B8;
+            transform: translateX(-50%) translateY(-8px) rotate(-5deg);
+        }
+        #pin-screen .lock-shackle.error-shackle {
+            border-color: #FF6B6B;
+        }
+        #pin-screen .keyhole {
+            width: 12px;
+            height: 18px;
+            background-color: #742284;
+            border-radius: 50% 50% 5px 5px;
+            position: relative;
+            top: -2px;
+            transition: background-color 0.5s ease;
+        }
+        #pin-screen .keyhole::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 10px;
+            height: 10px;
+            background-color: #742284;
+            border-radius: 50%;
+            transition: background-color 0.5s ease;
+        }
+        #pin-screen .password-badge {
+            position: absolute;
+            bottom: 5px;
+            right: 0px;
+            background-color: #00D4B8;
+            width: 42px;
+            height: 18px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.4s ease, box-shadow 0.4s ease;
+        }
+        #pin-screen .password-badge.active-badge {
+            background-color: #00F0D0;
+            box-shadow: 0 0 14px rgba(0, 212, 184, 0.7);
+            animation: badgePulse 1.2s ease-in-out infinite;
+        }
+        @keyframes badgePulse {
+            0%,
+            100% {
+                box-shadow: 0 0 8px rgba(0, 212, 184, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 20px rgba(0, 212, 184, 0.9);
+            }
+        }
+        #pin-screen .password-badge span {
+            width: 4px;
+            height: 4px;
+            background-color: white;
+            border-radius: 50%;
+            transition: background-color 0.3s;
+        }
+        #pin-screen h1 {
+            color: white;
+            font-size: clamp(18px, 4.5vw, 22px);
+            font-weight: 500;
+            margin-bottom: 8px;
+            text-align: center;
+            transition: all 0.35s ease;
+            letter-spacing: 0.3px;
+        }
+        #pin-screen .subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: clamp(14px, 3.5vw, 16px);
+            font-weight: 300;
+            text-align: center;
+            min-height: 22px;
+            transition: all 0.35s ease;
+            letter-spacing: 0.2px;
+        }
+        #pin-screen .subtitle.error-text {
+            color: #FF6B6B;
+            font-weight: 400;
+        }
+        #pin-screen .subtitle.success-text {
+            color: #00D4B8;
+            font-weight: 400;
+        }
+        #pin-screen .step-indicator {
+            display: flex;
+            gap: 10px;
+            margin-top: 6px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            height: 8px;
+            align-items: center;
+        }
+        #pin-screen .step-indicator.visible {
+            opacity: 1;
+        }
+        #pin-screen .step-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.25);
+            transition: all 0.35s ease;
+        }
+        #pin-screen .step-dot.active-step {
+            background-color: #00D4B8;
+            box-shadow: 0 0 8px rgba(0, 212, 184, 0.6);
+            width: 10px;
+            height: 10px;
+        }
+        #pin-screen .step-dot.done-step {
+            background-color: rgba(255, 255, 255, 0.6);
+        }
+        #pin-screen .input-dots {
+            display: flex;
+            gap: clamp(18px, 4vw, 25px);
+            margin-top: clamp(40px, 8vh, 60px);
+            margin-bottom: clamp(30px, 6vh, 40px);
+            transition: transform 0.3s ease;
+        }
+        #pin-screen .input-dots.shaking {
+            animation: shake 0.5s ease-in-out;
+        }
+        #pin-screen .input-dots.pulse-success {
+            animation: successPulse 0.6s ease-in-out;
+        }
+        @keyframes shake {
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+            15% {
+                transform: translateX(-10px);
+            }
+            30% {
+                transform: translateX(10px);
+            }
+            45% {
+                transform: translateX(-8px);
+            }
+            60% {
+                transform: translateX(8px);
+            }
+            75% {
+                transform: translateX(-4px);
+            }
+            90% {
+                transform: translateX(4px);
+            }
+        }
+        @keyframes successPulse {
+            0% {
+                transform: scale(1);
+            }
+            40% {
+                transform: scale(1.12);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        #pin-screen .dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.2);
+            transition: all 0.25s ease;
+            position: relative;
+        }
+        #pin-screen .dot.filled {
+            background-color: white;
+            box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+            animation: dotFill 0.2s ease-out;
+        }
+        @keyframes dotFill {
+            0% {
+                transform: scale(0.5);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        #pin-screen .dot.success-dot {
+            background-color: #00D4B8 !important;
+            box-shadow: 0 0 14px rgba(0, 212, 184, 0.8) !important;
+        }
+        #pin-screen .dot.error-dot {
+            background-color: #FF6B6B !important;
+            box-shadow: 0 0 14px rgba(255, 107, 107, 0.8) !important;
+        }
+        #pin-screen .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: clamp(8px, 2vw, 15px);
+            width: 90%;
+            max-width: 400px;
+            padding: 0 clamp(4px, 2vw, 10px);
+        }
+        #pin-screen .key {
+            background-color: rgba(255, 255, 255, 0.15);
+            height: clamp(55px, 12vw, 65px);
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: clamp(22px, 5vw, 28px);
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.12s ease, transform 0.1s ease;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            position: relative;
+            overflow: hidden;
+        }
+        #pin-screen .key::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.15s ease;
+            pointer-events: none;
+        }
+        #pin-screen .key:active::after {
+            opacity: 1;
+        }
+        #pin-screen .key:active {
+            background-color: rgba(255, 255, 255, 0.3);
+            transform: scale(0.94);
+        }
+        #pin-screen .key-zero {
+            grid-column: 2;
+        }
+        #pin-screen .key-delete {
+            grid-column: 3;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: transparent;
+            box-shadow: none;
+            cursor: pointer;
+            height: clamp(55px, 12vw, 65px);
+            border-radius: 12px;
+            transition: opacity 0.15s ease, transform 0.1s ease;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        #pin-screen .key-delete:active {
+            opacity: 0.6;
+            transform: scale(0.9);
+        }
+        #pin-screen .delete-icon {
+            width: clamp(22px, 5vw, 28px);
+            height: clamp(22px, 5vw, 28px);
+            fill: rgba(255, 255, 255, 0.75);
+            transition: fill 0.2s ease;
+            pointer-events: none;
+        }
+        #pin-screen .key-delete:active .delete-icon {
+            fill: white;
+        }
+        #pin-screen .toast {
+            position: fixed;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-120px);
+            background-color: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            z-index: 100;
+            pointer-events: none;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            white-space: nowrap;
+            text-align: center;
+            max-width: 90vw;
+        }
+        #pin-screen .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        #pin-screen .toast.success-toast {
+            background-color: #00B894;
+            color: #fff;
+        }
+        #pin-screen .toast.error-toast {
+            background-color: #E74C3C;
+            color: #fff;
+        }
 
-  <style>
-    /* ========== ESTILOS GLOBALES ========== */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-      -webkit-touch-callout: none;
-    }
+        /* ========== PANTALLA MENÚ PRINCIPAL ========== */
+        #main-screen {
+            background: #790699;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: hidden;
+        }
+        .app-container {
+            width: 100%;
+            max-width: 430px;
+            background: #790699;
+            height: 100vh;
+            height: 100dvh;
+            position: relative;
+            padding-bottom: 0;
+            overflow-x: hidden;
+            overflow-y: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .top-bar {
+            padding: calc(14px + env(safe-area-inset-top)) 12px 0px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: #790699;
+            flex-shrink: 0;
+        }
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            cursor: pointer;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+        .icon-btn:active {
+            background: rgba(255, 255, 255, 0.25);
+        }
+        .icon-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: white;
+            opacity: 0.95;
+            pointer-events: none;
+        }
+        .greeting-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            cursor: pointer;
+            padding: 2px 12px;
+            border-radius: 12px;
+            transition: background 0.2s;
+            min-width: 0;
+        }
+        .greeting-container:active {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .greeting-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .greeting-icon svg {
+            width: 24px;
+            height: 24px;
+            fill: white;
+            opacity: 0.9;
+            pointer-events: none;
+        }
+        .greeting-text {
+            color: white;
+            font-size: 22px;
+            font-weight: 700;
+            opacity: 0.95;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .grid-section {
+            padding: 24px 10px 6px 10px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px 6px;
+            flex-shrink: 0;
+        }
+        .grid-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            position: relative;
+            opacity: 0;
+            transform: translateY(40px);
+        }
+        .grid-item.animate-in {
+            animation: slideUpGrid 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        @keyframes slideUpGrid {
+            0% {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .tile {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+            padding: 8px;
+            flex-shrink: 0;
+        }
+        .tile img {
+            width: 44px;
+            height: 44px;
+            object-fit: contain;
+            pointer-events: none;
+        }
+        .tile-large img {
+            width: 54px;
+            height: 54px;
+            pointer-events: none;
+        }
+        .label {
+            color: white;
+            font-size: 11px;
+            text-align: center;
+            line-height: 1.2;
+            font-weight: 600;
+            opacity: 0.95;
+            word-break: break-word;
+            max-width: 100%;
+        }
+        .badge-ica {
+            position: absolute;
+            top: -4px;
+            right: -2px;
+            background: #FFB300;
+            color: #3E2723;
+            font-size: 7px;
+            font-weight: 700;
+            padding: 1px 3px;
+            border-radius: 3px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            z-index: 2;
+        }
+        .carousel-section {
+            margin: 36px 10px 8px 8px;
+            background: transparent;
+            border-radius: 12px;
+            padding: 0;
+            flex-shrink: 0;
+            opacity: 0;
+            transform: translateX(30px);
+        }
+        .carousel-section.animate-in {
+            animation: slideInRight 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        @keyframes slideInRight {
+            0% {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        .carousel-container {
+            position: relative;
+            overflow: visible;
+            border-radius: 12px;
+            padding: 0 4px;
+        }
+        .carousel-track {
+            display: flex;
+            transition: transform 0.3s ease;
+            padding-left: 4px;
+        }
+        .carousel-slide {
+            min-width: calc(100% - 30px);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            background: transparent;
+            margin-right: 6px;
+            flex-shrink: 0;
+        }
+        .carousel-slide img {
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            max-height: 140px;
+            object-fit: contain;
+            border-radius: 10px;
+            display: block;
+            pointer-events: none;
+        }
+        .carousel-dots {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 6px;
+        }
+        .carousel-dots .dot-nav {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .carousel-dots .dot-nav.active {
+            width: 16px;
+            border-radius: 3px;
+            background: white;
+        }
+        .bottom-panel {
+            background: #F5F5F7;
+            margin-top: auto;
+            border-top-left-radius: 32px;
+            border-top-right-radius: 32px;
+            padding: 12px 12px calc(16px + env(safe-area-inset-bottom));
+            min-height: 180px;
+            width: 100%;
+            max-width: 430px;
+            flex-shrink: 0;
+            opacity: 0;
+            transform: translateY(60px);
+        }
+        .bottom-panel.animate-in {
+            animation: slideUpPanel 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        @keyframes slideUpPanel {
+            0% {
+                opacity: 0;
+                transform: translateY(60px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .balance-card,
+        .transactions-card {
+            background: white;
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            cursor: pointer;
+            width: 100%;
+        }
+        .balance-left,
+        .transactions-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .balance-icon {
+            width: 26px;
+            height: 26px;
+            fill: #790699;
+        }
+        .balance-label,
+        .transactions-label {
+            font-size: 16px;
+            color: #641974;
+            font-weight: 500;
+        }
+        .balance-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1E192D;
+        }
+        .transactions-icon {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            pointer-events: none;
+        }
+        .chevron {
+            width: 22px;
+            height: 22px;
+            fill: #9E9E9E;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 14px;
+            margin-top: 8px;
+        }
+        .btn {
+            flex: 1;
+            height: 60px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            outline: none;
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+        .btn-qr {
+            background: white;
+            color: #18B7A0;
+            border: 2px solid #18B7A0;
+        }
+        .btn-qr svg {
+            width: 24px;
+            height: 24px;
+            fill: #18B7A0;
+        }
+        .btn-yapear {
+            background: #18B7A0;
+            color: white;
+        }
+        .btn-yapear svg {
+            width: 24px;
+            height: 24px;
+            fill: white;
+        }
+        .install-btn-wrap {
+            text-align: center;
+            margin-top: 12px;
+        }
+        .install-btn-wrap.hidden {
+            display: none;
+        }
+        .install-btn {
+            width: 100%;
+            height: 48px;
+            border-radius: 14px;
+            background: rgba(121, 6, 153, 0.1);
+            border: 2px solid #790699;
+            color: #790699;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .install-btn:active {
+            background: rgba(121, 6, 153, 0.2);
+        }
 
-    input, textarea {
-      -webkit-user-select: text;
-      -moz-user-select: text;
-      -ms-user-select: text;
-      user-select: text;
-    }
+        /* Modals */
+        .modal-overlay,
+        .modal-overlay-saldo {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .modal-overlay.active,
+        .modal-overlay-saldo.active {
+            display: flex;
+        }
+        .modal-content,
+        .modal-content-saldo {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            width: 100%;
+            max-width: 350px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+        .modal-title,
+        .modal-title-saldo {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .input-wrapper,
+        .input-wrapper-saldo {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .name-input {
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 500;
+            border: 2px solid #E0E0E0;
+            border-radius: 12px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .name-input:focus {
+            border-color: #790699;
+        }
+        .currency-symbol-modal {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+            font-weight: 700;
+            color: #790699;
+        }
+        .amount-input-modal {
+            width: 100%;
+            padding: 16px 16px 16px 40px;
+            font-size: 24px;
+            font-weight: 700;
+            border: 2px solid #E0E0E0;
+            border-radius: 12px;
+            outline: none;
+            text-align: right;
+            transition: border-color 0.2s;
+        }
+        .amount-input-modal:focus {
+            border-color: #790699;
+        }
+        .modal-buttons,
+        .modal-buttons-saldo {
+            display: flex;
+            gap: 12px;
+        }
+        .modal-btn,
+        .modal-btn-saldo {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .modal-btn:active,
+        .modal-btn-saldo:active {
+            transform: scale(0.98);
+        }
+        .btn-cancel,
+        .btn-cancel-saldo {
+            background: #F5F5F7;
+            color: #424242;
+        }
+        .btn-save,
+        .btn-save-saldo {
+            background: #790699;
+            color: white;
+        }
 
-    html, body {
-      overflow-x: hidden;
-      overflow-y: hidden;
-      width: 100%;
-      height: 100%;
-      background: #000;
-    }
+        /* Modal de créditos */
+        .credits-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            padding: 20px;
+            animation: fadeIn 0.2s ease;
+        }
+        .credits-modal-overlay.active {
+            display: flex;
+        }
+        .credits-modal {
+            background: white;
+            border-radius: 20px;
+            padding: 28px 24px;
+            width: 100%;
+            max-width: 340px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4);
+            text-align: center;
+            animation: slideUpModal 0.3s ease;
+        }
+        @keyframes slideUpModal {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .credits-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #790699;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .credits-content {
+            text-align: left;
+            margin-bottom: 24px;
+            font-size: 15px;
+            line-height: 1.8;
+            color: #333;
+        }
+        .credits-content strong {
+            color: #790699;
+            font-weight: 600;
+        }
+        .credits-content div {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .credits-content svg {
+            width: 20px;
+            height: 20px;
+            fill: #790699;
+            flex-shrink: 0;
+        }
+        .credits-btn {
+            width: 100%;
+            padding: 14px;
+            background: #790699;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .credits-btn:active {
+            background: #5e0478;
+        }
 
-    body {
-      display: flex;
-      justify-content: center;
-      position: relative;
-      min-height: 100vh;
-      min-height: 100dvh;
-      background: #000;
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-    }
+        /* ========== PANTALLA FORMULARIO ========== */
+        #form-screen {
+            background-color: #f0f0f0;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+        }
+        .form-container {
+            background-color: #ffffff;
+            width: 100%;
+            max-width: 400px;
+            height: 100vh;
+            max-height: 850px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            overflow-x: hidden !important;
+            overflow-y: auto;
+            touch-action: pan-y;
+        }
+        .form-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            font-weight: bold;
+            font-size: 20px;
+            color: #1a1a1a;
+            flex-shrink: 0;
+            width: 100%;
+        }
+        .form-icon-btn {
+            cursor: pointer;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            color: #790699;
+            font-weight: bold;
+        }
+        .recipient-section {
+            display: flex;
+            justify-content: center;
+            padding: 20px 0;
+            flex-shrink: 0;
+            width: 100%;
+        }
+        .recipient-name {
+            font-size: 22px;
+            color: #555;
+            padding: 5px 10px;
+            border-radius: 5px;
+            outline: none;
+            border: 1px solid transparent;
+            transition: border 0.2s;
+            text-align: center;
+            background: transparent;
+            width: 200px;
+        }
+        .recipient-name:focus {
+            border-bottom: 1px solid #ccc;
+        }
+        .recipient-name::placeholder {
+            color: #999;
+        }
+        .amount-section {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-top: 20px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        .amount-wrapper {
+            position: relative;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100px;
+        }
+        .currency-symbol-form {
+            color: #9b59b6;
+            font-size: 30px;
+            font-weight: 500;
+            position: absolute;
+            left: 50%;
+            transform-origin: left center;
+            transition: transform 0.2s ease;
+            pointer-events: none;
+        }
+        .amount-input-form {
+            color: #790699;
+            font-size: 60px;
+            font-weight: normal;
+            font-family: monospace;
+            line-height: 1;
+            border: none;
+            background: transparent;
+            outline: none;
+            text-align: center;
+            width: 100%;
+            max-width: 280px;
+            display: block;
+            margin: 0 auto;
+            transition: font-size 0.2s ease;
+        }
+        .amount-input-form::placeholder {
+            color: #790699;
+            font-weight: normal;
+            font-family: monospace;
+            opacity: 1;
+        }
+        .error-message-form {
+            background-color: #f0f0f5;
+            color: #555;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-top: 20px;
+            display: inline-block;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+        }
+        .error-message-form.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .input-section {
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            flex-shrink: 0;
+            width: 100%;
+        }
+        .number-input {
+            border: none;
+            border-bottom: 1px solid #ddd;
+            font-size: 18px;
+            color: #333;
+            text-align: center;
+            width: 100%;
+            max-width: 300px;
+            padding: 10px;
+            outline: none;
+            background: transparent;
+            margin: 0 auto;
+            display: block;
+        }
+        .number-input::placeholder {
+            color: #555;
+            font-weight: 400;
+        }
+        .number-input:focus {
+            border-bottom: 2px solid #00cba9;
+        }
+        .form-footer {
+            padding: 20px;
+            display: flex;
+            gap: 15px;
+            padding-bottom: 30px;
+            flex-shrink: 0;
+            width: 100%;
+        }
+        .form-btn {
+            flex: 1;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: center;
+            border: none;
+            transition: opacity 0.2s;
+        }
+        .form-btn:active {
+            opacity: 0.8;
+        }
+        .btn-secondary {
+            background-color: white;
+            border: 1px solid #ccc;
+            color: #555;
+        }
+        .btn-primary {
+            background-color: #00cba9;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 203, 169, 0.3);
+        }
 
-    .screen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: none;
-      justify-content: center;
-      align-items: center;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      z-index: 10;
-      pointer-events: none;
-    }
+        /* ========== PANTALLA COMPROBANTE ========== */
+        #receipt-screen {
+            background: #000;
+            overflow: hidden;
+        }
+        #receiptCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            animation: receiptAppear 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        @keyframes receiptAppear {
+            0% {
+                opacity: 0;
+                transform: scale(0.1);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
 
-    .screen.active {
-      display: flex;
-      opacity: 1;
-      z-index: 20;
-      pointer-events: all;
-    }
+        /* ========== MODAL DE ERROR ========== */
+        .error-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+            animation: fadeIn 0.2s ease;
+        }
+        .error-modal-overlay.active {
+            display: flex;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        .error-modal {
+            background: white;
+            border-radius: 20px;
+            padding: 24px 20px;
+            width: 100%;
+            max-width: 320px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4);
+            text-align: center;
+            animation: slideUpModal 0.3s ease;
+        }
+        .error-icon {
+            width: 50px;
+            height: 50px;
+            background: #ffebee;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+        .error-icon svg {
+            width: 28px;
+            height: 28px;
+            fill: #c62828;
+        }
+        .error-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+        }
+        .error-message-text {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.4;
+            margin-bottom: 20px;
+        }
+        .error-btn {
+            width: 100%;
+            padding: 14px;
+            background: #790699;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .error-btn:active {
+            background: #5e0478;
+        }
 
-    .screen.visible {
-      display: flex;
-    }
-
-    /* ========== SPLASH SCREEN ========== */
-    #splash-screen {
-      background: #000;
-      align-items: center;
-      justify-content: center;
-    }
-
-    #splash-screen img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-      opacity: 0;
-      transform: scale(0.3) translateY(50px);
-      transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-      -webkit-touch-callout: none;
-      pointer-events: none;
-    }
-
-    #splash-screen.active img {
-      opacity: 1;
-      transform: scale(1) translateY(0);
-    }
-
-    /* ========== MAIN MENU ========== */
-    #main-screen {
-      background: #790699;
-      flex-direction: column;
-      align-items: center;
-      overflow-y: hidden;
-    }
-
-    .app-container {
-      width: 100%;
-      max-width: 430px;
-      background: #790699;
-      height: 100vh;
-      height: 100dvh;
-      position: relative;
-      padding-bottom: 0;
-      overflow-x: hidden;
-      overflow-y: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* Top Bar */
-    .top-bar {
-      padding: calc(14px + env(safe-area-inset-top)) 12px 0px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      background: #790699;
-      flex-shrink: 0;
-    }
-
-    .icon-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.15);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      backdrop-filter: blur(10px);
-      cursor: pointer;
-      transition: background 0.2s;
-      flex-shrink: 0;
-    }
-
-    .icon-btn:active { background: rgba(255, 255, 255, 0.25); }
-    .icon-btn svg { 
-      width: 20px;
-      height: 20px;
-      fill: white; 
-      opacity: 0.95; 
-      pointer-events: none;
-    }
-
-    /* Greeting */
-    .greeting-container {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex: 1;
-      cursor: pointer;
-      padding: 2px 12px;
-      border-radius: 12px;
-      transition: background 0.2s;
-      min-width: 0;
-    }
-    .greeting-container:active { background: rgba(255, 255, 255, 0.1); }
-    .greeting-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.15);
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      flex-shrink: 0;
-    }
-    .greeting-icon svg { 
-      width: 24px;
-      height: 24px;
-      fill: white; 
-      opacity: 0.9; 
-      pointer-events: none;
-    }
-    .greeting-text {
-      color: white; 
-      font-size: 22px;
-      font-weight: 700;
-      opacity: 0.95; 
-      white-space: nowrap; 
-      overflow: hidden; 
-      text-overflow: ellipsis;
-    }
-
-    /* Grid */
-    .grid-section {
-      padding: 24px 10px 6px 10px;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 14px 6px;
-      flex-shrink: 0;
-    }
-    .grid-item {
-      display: flex; flex-direction: column; align-items: center;
-      gap: 5px; cursor: pointer; position: relative;
-    }
-    .tile {
-      width: 60px;
-      height: 60px;
-      background: white; border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      position: relative; overflow: hidden; padding: 8px; flex-shrink: 0;
-    }
-    .tile img { 
-      width: 44px;
-      height: 44px;
-      object-fit: contain;
-      pointer-events: none;
-    }
-    .tile-large img { 
-      width: 54px;
-      height: 54px;
-      pointer-events: none;
-    }
-    .label {
-      color: white; 
-      font-size: 11px;
-      text-align: center;
-      line-height: 1.2; font-weight: 600; opacity: 0.95;
-      word-break: break-word; max-width: 100%;
-    }
-    .badge-ica {
-      position: absolute; top: -4px; right: -2px;
-      background: #FFB300; color: #3E2723;
-      font-size: 7px; font-weight: 700;
-      padding: 1px 3px; border-radius: 3px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 2;
-    }
-
-    /* ========== CAROUSEL ========== */
-    .carousel-section {
-      margin: 36px 10px 8px 8px;
-      background: transparent;
-      border-radius: 12px;
-      padding: 0;
-      flex-shrink: 0;
-    }
-    .carousel-container {
-      position: relative;
-      overflow: visible;
-      border-radius: 12px;
-      padding: 0 4px;
-    }
-    .carousel-track {
-      display: flex;
-      transition: transform 0.3s ease;
-      padding-left: 4px;
-    }
-    .carousel-slide {
-      min-width: calc(100% - 30px);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      background: transparent;
-      margin-right: 6px;
-      flex-shrink: 0;
-    }
-    .carousel-slide img {
-      width: 100%;
-      max-width: 100%;
-      height: auto;
-      max-height: 140px;
-      object-fit: contain;
-      border-radius: 10px;
-      display: block;
-      pointer-events: none;
-    }
-    .carousel-dots {
-      display: flex;
-      justify-content: center;
-      gap: 5px;
-      margin-top: 6px;
-    }
-    .dot {
-      width: 5px; height: 5px; border-radius: 50%;
-      background: rgba(255,255,255,0.4); transition: all 0.3s; cursor: pointer;
-    }
-    .dot.active { width: 16px; border-radius: 3px; background: white; }
-
-    /* Bottom Panel */
-    .bottom-panel {
-      background: #F5F5F7; 
-      margin-top: auto;
-      border-top-left-radius: 32px;
-      border-top-right-radius: 32px;
-      padding: 12px 12px calc(16px + env(safe-area-inset-bottom));
-      min-height: 180px;
-      width: 100%; 
-      max-width: 430px;
-      flex-shrink: 0;
-    }
-    .balance-card, .transactions-card {
-      background: white; border-radius: 12px;
-      padding: 14px; margin-bottom: 10px;
-      display: flex; align-items: center; justify-content: space-between;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer; width: 100%;
-    }
-    .balance-left, .transactions-left { display: flex; align-items: center; gap: 12px; }
-    .balance-icon { width: 26px; height: 26px; fill: #790699; }
-    .balance-label, .transactions-label {
-      font-size: 16px; color: #641974; font-weight: 500;
-    }
-    .balance-value { font-size: 18px; font-weight: 700; color: #1E192D; }
-    .transactions-icon { width: 24px; height: 24px; object-fit: contain; pointer-events: none; }
-    .chevron { width: 22px; height: 22px; fill: #9E9E9E; }
-
-    /* Action Buttons */
-    .action-buttons { display: flex; gap: 14px; margin-top: 8px; }
-    .btn {
-      flex: 1; height: 60px; border-radius: 14px;
-      display: flex; align-items: center; justify-content: center;
-      gap: 10px; font-size: 18px; font-weight: 600;
-      cursor: pointer; transition: all 0.2s; border: none; outline: none;
-    }
-    .btn:active { transform: scale(0.98); }
-    .btn-qr { background: white; color: #18B7A0; border: 2px solid #18B7A0; }
-    .btn-qr svg { width: 24px; height: 24px; fill: #18B7A0; }
-    .btn-yapear { background: #18B7A0; color: white; }
-    .btn-yapear svg { width: 24px; height: 24px; fill: white; }
-
-    /* ✅ BOTÓN DE INSTALACIÓN */
-    .install-btn-wrap {
-      text-align: center;
-      margin-top: 12px;
-    }
-    .install-btn-wrap.hidden { display: none; }
-    .install-btn {
-      width: 100%;
-      height: 48px;
-      border-radius: 14px;
-      background: rgba(121, 6, 153, 0.1);
-      border: 2px solid #790699;
-      color: #790699;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .install-btn:active { background: rgba(121, 6, 153, 0.2); }
-
-    /* Modals */
-    .modal-overlay, .modal-overlay-saldo {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5); display: none;
-      align-items: center; justify-content: center;
-      z-index: 1000; padding: 20px;
-    }
-    .modal-overlay.active, .modal-overlay-saldo.active { display: flex; }
-    .modal-content, .modal-content-saldo {
-      background: white; border-radius: 20px; padding: 24px;
-      width: 100%; max-width: 350px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-    }
-    .modal-title, .modal-title-saldo {
-      font-size: 18px; font-weight: 700;
-      color: #1a1a1a; margin-bottom: 20px; text-align: center;
-    }
-    .input-wrapper, .input-wrapper-saldo { margin-bottom: 20px; }
-    .name-input {
-      width: 100%; padding: 16px; font-size: 16px; font-weight: 500;
-      border: 2px solid #E0E0E0; border-radius: 12px;
-      outline: none; transition: border-color 0.2s;
-    }
-    .name-input:focus { border-color: #790699; }
-    .currency-symbol-modal {
-      position: absolute; left: 16px; top: 50%;
-      transform: translateY(-50%); font-size: 20px;
-      font-weight: 700; color: #790699;
-    }
-    .amount-input-modal {
-      width: 100%; padding: 16px 16px 16px 40px; font-size: 24px;
-      font-weight: 700; border: 2px solid #E0E0E0; border-radius: 12px;
-      outline: none; text-align: right; transition: border-color 0.2s; position: relative;
-    }
-    .amount-input-modal:focus { border-color: #790699; }
-    .modal-buttons, .modal-buttons-saldo { display: flex; gap: 12px; }
-    .modal-btn, .modal-btn-saldo {
-      flex: 1; padding: 14px; border: none; border-radius: 12px;
-      font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s;
-    }
-    .modal-btn:active, .modal-btn-saldo:active { transform: scale(0.98); }
-    .btn-cancel, .btn-cancel-saldo { background: #F5F5F7; color: #424242; }
-    .btn-save, .btn-save-saldo { background: #790699; color: white; }
-
-    /* ========== MODAL DE CRÉDITOS ========== */
-    .credits-modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.7);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 3000;
-      padding: 20px;
-      animation: fadeIn 0.2s ease;
-    }
-    
-    .credits-modal-overlay.active { display: flex; }
-    
-    .credits-modal {
-      background: white;
-      border-radius: 20px;
-      padding: 28px 24px;
-      width: 100%;
-      max-width: 340px;
-      box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4);
-      text-align: center;
-      animation: slideUp 0.3s ease;
-    }
-    
-    .credits-title {
-      font-size: 20px;
-      font-weight: 700;
-      color: #790699;
-      margin-bottom: 20px;
-      padding-bottom: 12px;
-      border-bottom: 2px solid #f0f0f0;
-    }
-    
-    .credits-content {
-      text-align: left;
-      margin-bottom: 24px;
-      font-size: 15px;
-      line-height: 1.8;
-      color: #333;
-    }
-    
-    .credits-content strong {
-      color: #790699;
-      font-weight: 600;
-    }
-    
-    .credits-content div {
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .credits-content svg {
-      width: 20px;
-      height: 20px;
-      fill: #790699;
-      flex-shrink: 0;
-    }
-    
-    .credits-btn {
-      width: 100%;
-      padding: 14px;
-      background: #790699;
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    
-    .credits-btn:active { background: #5e0478; }
-
-    /* ========== PAYMENT FORM ========== */
-    #form-screen {
-      background-color: #f0f0f0; flex-direction: column;
-      align-items: center; overflow-y: auto;
-    }
-    .form-container {
-      background-color: #ffffff; width: 100%; max-width: 400px;
-      height: 100vh; max-height: 850px; display: flex;
-      flex-direction: column; position: relative;
-      box-shadow: 0 0 20px rgba(0,0,0,0.1);
-      overflow-x: hidden !important; overflow-y: auto;
-      touch-action: pan-y;
-    }
-    .form-header {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 15px 20px; font-weight: bold; font-size: 20px;
-      color: #1a1a1a; flex-shrink: 0; width: 100%;
-    }
-    .form-icon-btn {
-      cursor: pointer; font-size: 24px; display: flex;
-      align-items: center; justify-content: center;
-      width: 30px; height: 30px; color: #790699; font-weight: bold;
-    }
-    .recipient-section {
-      display: flex; justify-content: center; padding: 20px 0;
-      flex-shrink: 0; width: 100%;
-    }
-    .recipient-name {
-      font-size: 22px; color: #555; padding: 5px 10px;
-      border-radius: 5px; outline: none; border: 1px solid transparent;
-      transition: border 0.2s; text-align: center;
-      background: transparent; width: 200px;
-    }
-    .recipient-name:focus { border-bottom: 1px solid #ccc; }
-    .recipient-name::placeholder { color: #999; }
-    .amount-section {
-      flex-grow: 1; display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      margin-top: 20px; width: 100%; position: relative; overflow: hidden;
-    }
-    .amount-wrapper {
-      position: relative; width: 100%; display: flex;
-      justify-content: center; align-items: center; height: 100px;
-    }
-    .currency-symbol-form {
-      color: #9b59b6; font-size: 30px; font-weight: 500;
-      position: absolute; left: 50%; transform-origin: left center;
-      transition: transform 0.2s ease; pointer-events: none;
-    }
-    .amount-input-form {
-      color: #790699; font-size: 60px; font-weight: normal;
-      font-family: monospace; line-height: 1; border: none;
-      background: transparent; outline: none; text-align: center;
-      width: 100%; max-width: 280px; display: block; margin: 0 auto;
-      transition: font-size 0.2s ease;
-    }
-    .amount-input-form::placeholder {
-      color: #790699; font-weight: normal;
-      font-family: monospace; opacity: 1;
-    }
-    .error-message {
-      background-color: #f0f0f5; color: #555; padding: 8px 16px;
-      border-radius: 20px; font-size: 14px; margin-top: 20px;
-      display: inline-block; transition: opacity 0.3s; white-space: nowrap;
-    }
-    .error-message.hidden { opacity: 0; pointer-events: none; }
-    .input-section {
-      padding: 20px; text-align: center; margin-bottom: 20px;
-      flex-shrink: 0; width: 100%;
-    }
-    .number-input {
-      border: none; border-bottom: 1px solid #ddd; font-size: 18px;
-      color: #333; text-align: center; width: 100%; max-width: 300px;
-      padding: 10px; outline: none; background: transparent;
-      margin: 0 auto; display: block;
-    }
-    .number-input::placeholder { color: #555; font-weight: 400; }
-    .number-input:focus { border-bottom: 2px solid #00cba9; }
-    .form-footer {
-      padding: 20px; display: flex; gap: 15px;
-      padding-bottom: 30px; flex-shrink: 0; width: 100%;
-    }
-    .form-btn {
-      flex: 1; padding: 15px; border-radius: 8px; font-size: 16px;
-      font-weight: 500; cursor: pointer; text-align: center;
-      border: none; transition: opacity 0.2s;
-    }
-    .form-btn:active { opacity: 0.8; }
-    .btn-secondary { background-color: white; border: 1px solid #ccc; color: #555; }
-    .btn-primary {
-      background-color: #00cba9; color: white; font-weight: bold;
-      box-shadow: 0 2px 5px rgba(0, 203, 169, 0.3);
-    }
-
-    /* ========== RECEIPT SCREEN (CANVAS PANTALLA COMPLETA) ========== */
-    #receipt-screen {
-      background: #000;
-      overflow: hidden;
-    }
-    
-    #receiptCanvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: block;
-      animation: receiptAppear 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-    }
-    
-    @keyframes receiptAppear {
-      0% {
-        opacity: 0;
-        transform: scale(0.1);
-      }
-      100% {
-        opacity: 1;
-        transform: scale(1);
-      }
-    }
-
-    /* ========== ERROR MODAL ========== */
-    .error-modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.6);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
-      padding: 20px;
-      animation: fadeIn 0.2s ease;
-    }
-    
-    .error-modal-overlay.active { display: flex; }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    
-    .error-modal {
-      background: white;
-      border-radius: 20px;
-      padding: 24px 20px;
-      width: 100%;
-      max-width: 320px;
-      box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4);
-      text-align: center;
-      animation: slideUp 0.3s ease;
-    }
-    
-    @keyframes slideUp {
-      from { transform: translateY(20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    
-    .error-icon {
-      width: 50px;
-      height: 50px;
-      background: #ffebee;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 16px;
-    }
-    
-    .error-icon svg {
-      width: 28px;
-      height: 28px;
-      fill: #c62828;
-    }
-    
-    .error-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: #1a1a1a;
-      margin-bottom: 10px;
-    }
-    
-    .error-message {
-      font-size: 14px;
-      color: #666;
-      line-height: 1.4;
-      margin-bottom: 20px;
-    }
-    
-    .error-btn {
-      width: 100%;
-      padding: 14px;
-      background: #790699;
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    
-    .error-btn:active { background: #5e0478; }
-
-    /* Responsive & Safe Areas */
-    @media screen and (orientation: landscape) and (max-height: 500px) {
-      body { transform: rotate(90deg); transform-origin: left top; width: 100vh; height: 100vw; position: fixed; top: 0; left: 100%; }
-    }
-    @media screen and (max-width: 360px) {
-      .grid-section { gap: 12px 5px; }
-      .tile { width: 62px; height: 62px; }
-      .tile img { width: 40px; height: 40px; }
-      .label { font-size: 11px; }
-      .carousel-section { margin: 8px 12px 8px 4px; }
-      .carousel-slide { min-width: calc(100% - 80px); margin-right: 12px; }
-    }
-    @media screen and (min-height: 850px) {
-      .grid-section { padding: 16px; }
-      .bottom-panel { margin-top: 24px; }
-    }
-    @supports (padding: max(0px)) {
-      .top-bar, .grid-section, .bottom-panel {
-        padding-left: max(16px, env(safe-area-inset-left));
-        padding-right: max(16px, env(safe-area-inset-right));
-      }
-      .carousel-section {
-        margin-left: max(8px, env(safe-area-inset-left));
-        margin-right: max(12px, env(safe-area-inset-right));
-      }
-    }
-
-    @media (display-mode: standalone) {
-      body {
-        padding-top: env(safe-area-inset-top);
-        padding-bottom: env(safe-area-inset-bottom);
-        padding-left: env(safe-area-inset-left);
-        padding-right: env(safe-area-inset-right);
-      }
-    }
-  </style>
+        /* ========== RESPONSIVE ========== */
+        @media screen and (max-width: 360px) {
+            #pin-screen .input-dots {
+                gap: 14px;
+            }
+            #pin-screen .dot {
+                width: 12px;
+                height: 12px;
+            }
+            #pin-screen .key {
+                height: 50px;
+                font-size: 20px;
+                border-radius: 10px;
+            }
+            #pin-screen .key-delete {
+                height: 50px;
+            }
+            #pin-screen .lock-icon-container {
+                width: 65px;
+                height: 75px;
+                margin-bottom: 15px;
+            }
+            #pin-screen .lock-body {
+                width: 52px;
+                height: 46px;
+                border-radius: 6px;
+            }
+            #pin-screen .lock-shackle {
+                width: 32px;
+                height: 32px;
+                border-width: 6px;
+                bottom: 40px;
+            }
+            #pin-screen .password-badge {
+                width: 34px;
+                height: 15px;
+                bottom: 3px;
+                right: -2px;
+                gap: 3px;
+            }
+            #pin-screen .password-badge span {
+                width: 3px;
+                height: 3px;
+            }
+            #pin-screen .keyhole {
+                width: 10px;
+                height: 15px;
+                top: -1px;
+            }
+            #pin-screen .keyhole::before {
+                width: 8px;
+                height: 8px;
+                top: -5px;
+            }
+            .grid-section {
+                gap: 12px 5px;
+            }
+            .tile {
+                width: 62px;
+                height: 62px;
+            }
+            .tile img {
+                width: 40px;
+                height: 40px;
+            }
+            .label {
+                font-size: 11px;
+            }
+            .carousel-section {
+                margin: 8px 12px 8px 4px;
+            }
+            .carousel-slide {
+                min-width: calc(100% - 80px);
+                margin-right: 12px;
+            }
+        }
+        @media screen and (min-width: 500px) {
+            #pin-screen .keypad {
+                gap: 18px;
+            }
+            #pin-screen .key {
+                height: 70px;
+                font-size: 30px;
+                border-radius: 14px;
+            }
+            #pin-screen .key-delete {
+                height: 70px;
+            }
+            #pin-screen .input-dots {
+                gap: 28px;
+            }
+            #pin-screen .dot {
+                width: 16px;
+                height: 16px;
+            }
+        }
+        @media screen and (max-height: 600px) {
+            #pin-screen {
+                padding-top: 20px;
+                padding-bottom: 15px;
+            }
+            #pin-screen .input-dots {
+                margin-top: 18px;
+                margin-bottom: 18px;
+            }
+            #pin-screen .lock-icon-container {
+                margin-bottom: 10px;
+                transform: scale(0.85);
+            }
+            #pin-screen h1 {
+                margin-bottom: 4px;
+            }
+            #pin-screen .key {
+                height: 46px;
+                font-size: 20px;
+                border-radius: 10px;
+            }
+            #pin-screen .key-delete {
+                height: 46px;
+            }
+        }
+        @media screen and (min-height: 850px) {
+            .grid-section {
+                padding: 16px;
+            }
+            .bottom-panel {
+                margin-top: 24px;
+            }
+        }
+        @supports (padding: max(0px)) {
+            .top-bar,
+            .grid-section,
+            .bottom-panel {
+                padding-left: max(16px, env(safe-area-inset-left));
+                padding-right: max(16px, env(safe-area-inset-right));
+            }
+            .carousel-section {
+                margin-left: max(8px, env(safe-area-inset-left));
+                margin-right: max(12px, env(safe-area-inset-right));
+            }
+        }
+        @media (display-mode: standalone) {
+            body {
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+                padding-left: env(safe-area-inset-left);
+                padding-right: env(safe-area-inset-right);
+            }
+        }
+    </style>
 </head>
 <body>
 
-  <!-- ============ PANTALLA 1: SPLASH ============ -->
-  <div id="splash-screen" class="screen">
-    <img src="https://i.ibb.co/jkJPpxFY/Yape-iniciando.png" alt="Yape iniciando" draggable="false">
-  </div>
-
-  <!-- ============ PANTALLA 2: MENÚ PRINCIPAL ============ -->
-  <div id="main-screen" class="screen">
-    <div class="app-container">
-      <!-- Top Bar -->
-      <div class="top-bar">
-        <div class="greeting-container" onclick="openEditNameModal()">
-          <div class="greeting-icon">
-            <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-          </div>
-          <span class="greeting-text" id="greetingText">Hola, Usuario</span>
-        </div>
-        <div class="icon-btn" onclick="openCreditsModal()">
-          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-        </div>
-      </div>
-
-      <!-- Grid Section -->
-      <div class="grid-section">
-        <div class="grid-item"><div class="tile"><img src="https://i.ibb.co/pr9mvKQf/Icono-recargar-celular.png" alt="Recargar" draggable="false"></div><div class="label">Recargar<br>celular</div></div>
-        <div class="grid-item"><div class="tile"><img src="https://i.ibb.co/MxtgCzXT/Icono-facil-rapido.png" alt="Servicios" draggable="false"></div><div class="label">Yapear<br>servicios</div></div>
-        <div class="grid-item"><div class="tile"><img src="https://i.ibb.co/BVgywW7n/Icono-promos.png" alt="Promos" draggable="false"></div><div class="label">Promos</div></div>
-        <div class="grid-item"><div class="tile"><img src="https://i.ibb.co/fYJWtyp2/Icono-aprobar-compras.png" alt="Compras" draggable="false"></div><div class="label">Aprobar<br>compras</div></div>
-        <div class="grid-item"><div class="tile"><img src="https://i.ibb.co/RkVhgrmx/Icono-creditos.png" alt="Créditos" draggable="false"></div><div class="label">Créditos</div></div>
-        <div class="grid-item"><div class="tile"><img src="https://i.ibb.co/KzqtXNd7/Icono-gaming.png" alt="Gaming" draggable="false"></div><div class="label">Gaming</div></div>
-        <div class="grid-item"><div class="tile" style="position:relative;"><span class="badge-ica">Ica</span><img src="https://i.ibb.co/2YK1rZyg/Icono-viajes.png" alt="Viajes" draggable="false"></div><div class="label">Viajar<br>en bus</div></div>
-        <div class="grid-item"><div class="tile"><img src="https://i.ibb.co/wFgwMCr3/Icono-remesas.png" alt="Remesas" draggable="false"></div><div class="label">Remesas</div></div>
-        <div class="grid-item"><div class="tile"><img src="https://i.ibb.co/35GKjgq9/Icono-soat.png" alt="SOAT" draggable="false"></div><div class="label">SOAT</div></div>
-        <div class="grid-item"><div class="tile"><img src="https://i.ibb.co/7dHrqy6k/Icono-enviar-al-extrangero.png" alt="Exterior" draggable="false"></div><div class="label">Enviar al<br>exterior</div></div>
-        <div class="grid-item"><div class="tile"><img src="https://i.ibb.co/mrgCNPmJ/Icono-elecciones-generales.png" alt="Elecciones" draggable="false"></div><div class="label">Elecciones<br>Generales</div></div>
-        <div class="grid-item"><div class="tile tile-large" style="background:transparent;box-shadow:none;"><img src="https://i.ibb.co/fz9RzVrP/Icono-ver-mas.png" alt="Ver todo" draggable="false"></div><div class="label">Ver todo</div></div>
-      </div>
-
-      <!-- Carousel -->
-      <div class="carousel-section">
-        <div class="carousel-container">
-          <div class="carousel-track" id="carouselTrack">
-            <div class="carousel-slide"><img src="https://i.ibb.co/kgjvQ6c5/Yape-anuncio1.png" alt="Ad 1" draggable="false"></div>
-            <div class="carousel-slide"><img src="https://i.ibb.co/HLD4VHRK/Yape-anuncio2.png" alt="Ad 2" draggable="false"></div>
-            <div class="carousel-slide"><img src="https://i.ibb.co/KcMJ3FKv/Yape-anuncio3.png" alt="Ad 3" draggable="false"></div>
-            <div class="carousel-slide"><img src="https://i.ibb.co/1tbDP3cD/Yape-anuncio4.png" alt="Ad 4" draggable="false"></div>
-            <div class="carousel-slide"><img src="https://i.ibb.co/rGfM0w4Y/Yape-anuncio5.png" alt="Ad 5" draggable="false"></div>
-            <div class="carousel-slide"><img src="https://i.ibb.co/LXKWw2bY/Yape-anuncio6.png" alt="Ad 6" draggable="false"></div>
-          </div>
-        </div>
-        <div class="carousel-dots">
-          <div class="dot active" onclick="goToSlide(0)"></div>
-          <div class="dot" onclick="goToSlide(1)"></div>
-          <div class="dot" onclick="goToSlide(2)"></div>
-          <div class="dot" onclick="goToSlide(3)"></div>
-          <div class="dot" onclick="goToSlide(4)"></div>
-          <div class="dot" onclick="goToSlide(5)"></div>
-        </div>
-      </div>
-
-      <!-- Bottom Panel -->
-      <div class="bottom-panel">
-        <div class="balance-card">
-          <div class="balance-left" onclick="toggleBalanceVisibility()">
-            <svg class="balance-icon" viewBox="0 0 24 24" id="eyeIcon"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg>
-            <span class="balance-label" id="balanceLabel">Mostrar saldo</span>
-          </div>
-          <div class="balance-value" id="balanceValue" onclick="openEditSaldoModal(event)"></div>
-        </div>
-        <div class="transactions-card">
-          <div class="transactions-left">
-            <img class="transactions-icon" src="https://i.ibb.co/bjdR5CNH/Icono-ver-movimientos.png" alt="Movimientos" draggable="false">
-            <span class="transactions-label">Mostrar movimientos</span>
-          </div>
-          <svg class="chevron" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
-        </div>
-        <div class="action-buttons">
-          <button class="btn btn-qr"><svg viewBox="0 0 24 24"><path d="M3 11h8V3H3v8zm2-6h4v4H5V5zM3 21h8v-8H3v8zm2-6h4v4H5v-4zM13 3v8h8V3h-8zm6 6h-4V5h4v4zM13 13h2v2h-2zM15 15h2v2h-2zM13 17h2v2h-2zM17 13h2v2h-2zM19 15h2v2h-2zM17 17h2v2h-2zM15 19h2v2h-2zM19 19h2v2h-2z"/></svg> Escanear QR</button>
-          <button class="btn btn-yapear" id="btnYapearMain"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg> Yapear</button>
-        </div>
-
-        <!-- ✅ BOTÓN DE INSTALACIÓN -->
-        <div class="install-btn-wrap hidden" id="installPromptWrap">
-          <button class="install-btn" id="installBtn">📲 Instalar en pantalla principal</button>
-        </div>
-      </div>
-
-      <!-- Modals -->
-      <div class="modal-overlay" id="editNameModal">
-        <div class="modal-content">
-          <div class="modal-title">Editar nombre</div>
-          <div class="input-wrapper"><input type="text" class="name-input" id="nameInput" placeholder="Ingresa tu nombre" maxlength="30"></div>
-          <div class="modal-buttons">
-            <button class="modal-btn btn-cancel" onclick="closeEditNameModal()">Cancelar</button>
-            <button class="modal-btn btn-save" onclick="saveName()">Guardar</button>
-          </div>
-        </div>
-      </div>
-      <div class="modal-overlay-saldo" id="editSaldoModal">
-        <div class="modal-content-saldo">
-          <div class="modal-title-saldo">Editar saldo</div>
-          <div class="input-wrapper-saldo">
-            <span class="currency-symbol-modal"> </span>
-            <input type="text" class="amount-input-modal" id="amountInputModal" placeholder="0.00" inputmode="decimal">
-          </div>
-          <div class="modal-buttons-saldo">
-            <button class="modal-btn-saldo btn-cancel-saldo" onclick="closeEditSaldoModal()">Cancelar</button>
-            <button class="modal-btn-saldo btn-save-saldo" onclick="saveAmount()">Guardar</button>
-          </div>
-        </div>
-      </div>
+    <!-- ============ PANTALLA 1: SPLASH ============ -->
+    <div id="splash-screen" class="screen">
+        <img src="https://i.ibb.co/jkJPpxFY/Yape-iniciando.png" alt="Yape iniciando" draggable="false">
     </div>
-  </div>
 
-  <!-- ============ MODAL DE CRÉDITOS ============ -->
-  <div class="credits-modal-overlay" id="creditsModal">
-    <div class="credits-modal">
-      <div class="credits-title">Créditos de la aplicación</div>
-      <div class="credits-content">
-        <div>
-          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-          <strong>Creador:</strong> Pak4sx7
+    <!-- ============ PANTALLA 2: PIN / CONTRASEÑA ============ -->
+    <div id="pin-screen" class="screen">
+        <div class="toast" id="toast"></div>
+        <div class="header-section">
+            <div class="lock-icon-container" id="lockContainer">
+                <div class="lock-shackle" id="lockShackle"></div>
+                <div class="lock-body" id="lockBody">
+                    <div class="keyhole"></div>
+                </div>
+                <div class="password-badge" id="passwordBadge">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+            <h1 id="mainTitle">Ingresa tu clave Yape</h1>
+            <p class="subtitle" id="subtitle">Clave de 6 dígitos</p>
+            <div class="step-indicator" id="stepIndicator">
+                <div class="step-dot active-step" id="stepDot1"></div>
+                <div class="step-dot" id="stepDot2"></div>
+            </div>
         </div>
-        <div>
-          <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
-          <strong>Contactame:</strong>
+        <div class="input-dots" id="dotsContainer">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
         </div>
-        <div>
-          <svg viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
-          <strong>Telegram:</strong> @pak4sx7
-        </div>
-        <div>
-          <svg viewBox="0 0 24 24"><path d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2m-.2 2A3.6 3.6 0 0 0 4 7.6v8.8C4 18.39 5.61 20 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6C20 5.61 18.39 4 16.4 4H7.6m9.65 1.5a1.25 1.25 0 0 1 1.25 1.25A1.25 1.25 0 0 1 17.25 8 1.25 1.25 0 0 1 16 6.75a1.25 1.25 0 0 1 1.25-1.25M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3z"/></svg>
-          <strong>Instagram:</strong> @pak4sx7
-        </div>
-      </div>
-      <button class="credits-btn" onclick="closeCreditsModal()">Aceptar</button>
+        <div class="keypad" id="keypadContainer"></div>
     </div>
-  </div>
 
-  <!-- ============ PANTALLA 3: FORMULARIO DE YAPEO ============ -->
-  <div id="form-screen" class="screen">
-    <div class="form-container">
-      <div class="form-header">
-        <div class="form-icon-btn" id="btnBackForm">&lt;</div>
-        <div>Yapear a</div>
-        <div class="form-icon-btn" onclick="showScreen('main-screen')">&times;</div>
-      </div>
-      <div class="recipient-section">
-        <input type="text" class="recipient-name" id="recipientName" placeholder="Nombre">
-      </div>
-      <div class="amount-section">
-        <div class="amount-wrapper">
-          <span class="currency-symbol-form" id="currencySymbolForm">S/</span>
-          <input type="text" class="amount-input-form" id="amountInputForm" placeholder="0" inputmode="decimal">
+    <!-- ============ PANTALLA 3: MENÚ PRINCIPAL ============ -->
+    <div id="main-screen" class="screen">
+        <div class="app-container">
+            <div class="top-bar">
+                <div class="greeting-container" onclick="openEditNameModal()">
+                    <div class="greeting-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    </div>
+                    <span class="greeting-text" id="greetingText">Hola, Usuario</span>
+                </div>
+                <div class="icon-btn" onclick="openCreditsModal()">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                </div>
+            </div>
+            <div class="grid-section" id="gridSection">
+                <div class="grid-item"><div class="tile"><img src="https://i.ibb.co/pr9mvKQf/Icono-recargar-celular.png" alt="Recargar" draggable="false"></div><div class="label">Recargar<br>celular</div></div>
+                <div class="grid-item"><div class="tile"><img src="https://i.ibb.co/MxtgCzXT/Icono-facil-rapido.png" alt="Servicios" draggable="false"></div><div class="label">Yapear<br>servicios</div></div>
+                <div class="grid-item"><div class="tile"><img src="https://i.ibb.co/BVgywW7n/Icono-promos.png" alt="Promos" draggable="false"></div><div class="label">Promos</div></div>
+                <div class="grid-item"><div class="tile"><img src="https://i.ibb.co/fYJWtyp2/Icono-aprobar-compras.png" alt="Compras" draggable="false"></div><div class="label">Aprobar<br>compras</div></div>
+                <div class="grid-item"><div class="tile"><img src="https://i.ibb.co/RkVhgrmx/Icono-creditos.png" alt="Créditos" draggable="false"></div><div class="label">Créditos</div></div>
+                <div class="grid-item"><div class="tile"><img src="https://i.ibb.co/KzqtXNd7/Icono-gaming.png" alt="Gaming" draggable="false"></div><div class="label">Gaming</div></div>
+                <div class="grid-item"><div class="tile" style="position:relative;"><span class="badge-ica">Ica</span><img src="https://i.ibb.co/2YK1rZyg/Icono-viajes.png" alt="Viajes" draggable="false"></div><div class="label">Viajar<br>en bus</div></div>
+                <div class="grid-item"><div class="tile"><img src="https://i.ibb.co/wFgwMCr3/Icono-remesas.png" alt="Remesas" draggable="false"></div><div class="label">Remesas</div></div>
+                <div class="grid-item"><div class="tile"><img src="https://i.ibb.co/35GKjgq9/Icono-soat.png" alt="SOAT" draggable="false"></div><div class="label">SOAT</div></div>
+                <div class="grid-item"><div class="tile"><img src="https://i.ibb.co/7dHrqy6k/Icono-enviar-al-extrangero.png" alt="Exterior" draggable="false"></div><div class="label">Enviar al<br>exterior</div></div>
+                <div class="grid-item"><div class="tile"><img src="https://i.ibb.co/mrgCNPmJ/Icono-elecciones-generales.png" alt="Elecciones" draggable="false"></div><div class="label">Elecciones<br>Generales</div></div>
+                <div class="grid-item"><div class="tile tile-large" style="background:transparent;box-shadow:none;"><img src="https://i.ibb.co/fz9RzVrP/Icono-ver-mas.png" alt="Ver todo" draggable="false"></div><div class="label">Ver todo</div></div>
+            </div>
+            <div class="carousel-section" id="carouselSection">
+                <div class="carousel-container">
+                    <div class="carousel-track" id="carouselTrack">
+                        <div class="carousel-slide"><img src="https://i.ibb.co/kgjvQ6c5/Yape-anuncio1.png" alt="Ad 1" draggable="false"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/HLD4VHRK/Yape-anuncio2.png" alt="Ad 2" draggable="false"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/KcMJ3FKv/Yape-anuncio3.png" alt="Ad 3" draggable="false"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/1tbDP3cD/Yape-anuncio4.png" alt="Ad 4" draggable="false"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/rGfM0w4Y/Yape-anuncio5.png" alt="Ad 5" draggable="false"></div>
+                        <div class="carousel-slide"><img src="https://i.ibb.co/LXKWw2bY/Yape-anuncio6.png" alt="Ad 6" draggable="false"></div>
+                    </div>
+                </div>
+                <div class="carousel-dots">
+                    <div class="dot-nav active" onclick="goToSlide(0)"></div>
+                    <div class="dot-nav" onclick="goToSlide(1)"></div>
+                    <div class="dot-nav" onclick="goToSlide(2)"></div>
+                    <div class="dot-nav" onclick="goToSlide(3)"></div>
+                    <div class="dot-nav" onclick="goToSlide(4)"></div>
+                    <div class="dot-nav" onclick="goToSlide(5)"></div>
+                </div>
+            </div>
+            <div class="bottom-panel" id="bottomPanel">
+                <div class="balance-card">
+                    <div class="balance-left" onclick="toggleBalanceVisibility()">
+                        <svg class="balance-icon" viewBox="0 0 24 24" id="eyeIcon"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg>
+                        <span class="balance-label" id="balanceLabel">Mostrar saldo</span>
+                    </div>
+                    <div class="balance-value" id="balanceValue" onclick="openEditSaldoModal(event)"></div>
+                </div>
+                <div class="transactions-card">
+                    <div class="transactions-left">
+                        <img class="transactions-icon" src="https://i.ibb.co/bjdR5CNH/Icono-ver-movimientos.png" alt="Movimientos" draggable="false">
+                        <span class="transactions-label">Mostrar movimientos</span>
+                    </div>
+                    <svg class="chevron" viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-qr"><svg viewBox="0 0 24 24"><path d="M3 11h8V3H3v8zm2-6h4v4H5V5zM3 21h8v-8H3v8zm2-6h4v4H5v-4zM13 3v8h8V3h-8zm6 6h-4V5h4v4zM13 13h2v2h-2zM15 15h2v2h-2zM13 17h2v2h-2zM17 13h2v2h-2zM19 15h2v2h-2zM17 17h2v2h-2zM15 19h2v2h-2zM19 19h2v2h-2z"/></svg> Escanear QR</button>
+                    <button class="btn btn-yapear" id="btnYapearMain"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg> Yapear</button>
+                </div>
+                <div class="install-btn-wrap hidden" id="installPromptWrap">
+                    <button class="install-btn" id="installBtn">📲 Instalar en pantalla principal</button>
+                </div>
+            </div>
+            <div class="modal-overlay" id="editNameModal">
+                <div class="modal-content">
+                    <div class="modal-title">Editar nombre</div>
+                    <div class="input-wrapper"><input type="text" class="name-input" id="nameInput" placeholder="Ingresa tu nombre" maxlength="30"></div>
+                    <div class="modal-buttons">
+                        <button class="modal-btn btn-cancel" onclick="closeEditNameModal()">Cancelar</button>
+                        <button class="modal-btn btn-save" onclick="saveName()">Guardar</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-overlay-saldo" id="editSaldoModal">
+                <div class="modal-content-saldo">
+                    <div class="modal-title-saldo">Editar saldo</div>
+                    <div class="input-wrapper-saldo">
+                        <span class="currency-symbol-modal">S/</span>
+                        <input type="text" class="amount-input-modal" id="amountInputModal" placeholder="0.00" inputmode="decimal">
+                    </div>
+                    <div class="modal-buttons-saldo">
+                        <button class="modal-btn-saldo btn-cancel-saldo" onclick="closeEditSaldoModal()">Cancelar</button>
+                        <button class="modal-btn-saldo btn-save-saldo" onclick="saveAmount()">Guardar</button>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="error-message" id="errorMessage">El monto ingresado no es válido</div>
-      </div>
-      <div class="input-section">
-        <input type="tel" class="number-input" id="phoneInput" placeholder="Agregar número" maxlength="3">
-      </div>
-      <div class="form-footer">
-        <button class="form-btn btn-secondary">Otros bancos</button>
-        <button class="form-btn btn-primary" id="btnYapearForm">Yapear</button>
-      </div>
     </div>
-  </div>
 
-  <!-- ============ PANTALLA 4: COMPROBANTE (CANVAS PANTALLA COMPLETA) ============ -->
-  <div id="receipt-screen" class="screen">
-    <canvas id="receiptCanvas"></canvas>
-  </div>
-
-  <!-- ============ MODAL DE ERROR ============ -->
-  <div class="error-modal-overlay" id="errorModal">
-    <div class="error-modal">
-      <div class="error-icon">
-        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-      </div>
-      <div class="error-title">⚠️ Campos incompletos</div>
-      <div class="error-message" id="errorMessageText">Debes llenar todos los campos.</div>
-      <button class="error-btn" onclick="closeErrorModal()">Aceptar</button>
+    <!-- ============ MODAL DE CRÉDITOS ============ -->
+    <div class="credits-modal-overlay" id="creditsModal">
+        <div class="credits-modal">
+            <div class="credits-title">Créditos de la aplicación</div>
+            <div class="credits-content">
+                <div>
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    <strong>Creador:</strong> Pak4sx7
+                </div>
+                <div>
+                    <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                    <strong>Contactame:</strong>
+                </div>
+                <div>
+                    <svg viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                    <strong>Telegram:</strong> @pak4sx7
+                </div>
+                <div>
+                    <svg viewBox="0 0 24 24"><path d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2m-.2 2A3.6 3.6 0 0 0 4 7.6v8.8C4 18.39 5.61 20 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6C20 5.61 18.39 4 16.4 4H7.6m9.65 1.5a1.25 1.25 0 0 1 1.25 1.25A1.25 1.25 0 0 1 17.25 8 1.25 1.25 0 0 1 16 6.75a1.25 1.25 0 0 1 1.25-1.25M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3z"/></svg>
+                    <strong>Instagram:</strong> @pak4sx7
+                </div>
+            </div>
+            <button class="credits-btn" onclick="closeCreditsModal()">Aceptar</button>
+        </div>
     </div>
-  </div>
 
-  <script>
-    // ========== PWA: SERVICE WORKER DINÁMICO ==========
-    if ('serviceWorker' in navigator) {
-      const swCode = `
+    <!-- ============ PANTALLA 4: FORMULARIO DE YAPEO ============ -->
+    <div id="form-screen" class="screen">
+        <div class="form-container">
+            <div class="form-header">
+                <div class="form-icon-btn" id="btnBackForm">&lt;</div>
+                <div>Yapear a</div>
+                <div class="form-icon-btn" onclick="showScreen('main-screen')">&times;</div>
+            </div>
+            <div class="recipient-section">
+                <input type="text" class="recipient-name" id="recipientName" placeholder="Nombre">
+            </div>
+            <div class="amount-section">
+                <div class="amount-wrapper">
+                    <span class="currency-symbol-form" id="currencySymbolForm">S/</span>
+                    <input type="text" class="amount-input-form" id="amountInputForm" placeholder="0" inputmode="decimal">
+                </div>
+                <div class="error-message-form hidden" id="errorMessage">El monto ingresado no es válido</div>
+            </div>
+            <div class="input-section">
+                <input type="tel" class="number-input" id="phoneInput" placeholder="Agregar número" maxlength="3">
+            </div>
+            <div class="form-footer">
+                <button class="form-btn btn-secondary">Otros bancos</button>
+                <button class="form-btn btn-primary" id="btnYapearForm">Yapear</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ PANTALLA 5: COMPROBANTE ============ -->
+    <div id="receipt-screen" class="screen">
+        <canvas id="receiptCanvas"></canvas>
+    </div>
+
+    <!-- ============ MODAL DE ERROR ============ -->
+    <div class="error-modal-overlay" id="errorModal">
+        <div class="error-modal">
+            <div class="error-icon">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+            </div>
+            <div class="error-title">⚠️ Campos incompletos</div>
+            <div class="error-message-text" id="errorMessageText">Debes llenar todos los campos.</div>
+            <button class="error-btn" onclick="closeErrorModal()">Aceptar</button>
+        </div>
+    </div>
+
+    <script>
+        // ========== PWA: SERVICE WORKER DINÁMICO ==========
+        if ('serviceWorker' in navigator) {
+            const swCode = `
         const CACHE_NAME = 'yape-fake-v1';
         const ASSETS = [self.location.href];
-
         self.addEventListener('install', event => {
-          event.waitUntil(
-            caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
-          );
+          event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
           self.skipWaiting();
         });
-
         self.addEventListener('activate', event => {
-          event.waitUntil(
-            caches.keys().then(keys =>
-              Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-            )
-          );
+          event.waitUntil(caches.keys().then(keys =>
+            Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+          ));
           self.clients.claim();
         });
-
         self.addEventListener('fetch', event => {
-          event.respondWith(
-            caches.match(event.request).then(cached => cached || fetch(event.request))
-          );
+          event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request)));
         });
       `;
-      const swBlob = new Blob([swCode], { type: 'application/javascript' });
-      const swUrl = URL.createObjectURL(swBlob);
-      navigator.serviceWorker.register(swUrl).catch(() => {});
-    }
-
-    // ========== PWA: MANIFEST DINÁMICO ==========
-    function createManifest() {
-      const manifest = {
-        name: 'Yape',
-        short_name: 'Yape',
-        description: 'Aplicación de pagos Yape',
-        start_url: location.href,
-        display: 'standalone',
-        orientation: 'portrait',
-        background_color: '#790699',
-        theme_color: '#790699',
-        icons: [{
-          src: 'https://vectorseek.com/wp-content/uploads/2023/09/Yape-Logo-Vector.svg-.png',
-          sizes: 'any',
-          type: 'image/svg+xml',
-          purpose: 'any maskable'
-        }]
-      };
-      const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
-      const manifestUrl = URL.createObjectURL(blob);
-      const link = document.createElement('link');
-      link.rel = 'manifest';
-      link.href = manifestUrl;
-      document.head.appendChild(link);
-    }
-    createManifest();
-
-    // ========== PWA: LÓGICA DE INSTALACIÓN ==========
-    let deferredPrompt = null;
-    const installWrap = document.getElementById('installPromptWrap');
-    const installBtn = document.getElementById('installBtn');
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      installWrap.classList.remove('hidden');
-    });
-
-    installBtn.addEventListener('click', async () => {
-      if (!deferredPrompt) return;
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        installWrap.classList.add('hidden');
-        deferredPrompt = null;
-      }
-    });
-
-    window.addEventListener('appinstalled', () => {
-      installWrap.classList.add('hidden');
-      deferredPrompt = null;
-    });
-
-    // 🔒 BLOQUEAR MENÚ CONTEXTUAL excepto en el canvas del comprobante
-    document.addEventListener('contextmenu', function(e) {
-      if (e.target.id === 'receiptCanvas') {
-        e.preventDefault();
-        downloadReceipt();
-        return false;
-      }
-      e.preventDefault();
-      return false;
-    });
-
-    // ========== VARIABLES GLOBALES ==========
-    let currentSlide = 0, totalSlides = 6, balanceHidden = true, currentBalance = '0', currentName = 'Usuario', carouselInterval;
-
-    // ========== PERSISTENCIA CON LOCALSTORAGE ==========
-    const STORAGE_KEY = 'yape_fake_user_data';
-    
-    function loadUserData() {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          const data = JSON.parse(saved);
-          if (data.name) currentName = data.name;
-          if (data.balance !== undefined) currentBalance = data.balance;
-          balanceHidden = true;
+            const swBlob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(swBlob);
+            navigator.serviceWorker.register(swUrl).catch(() => {});
         }
-      } catch (e) { console.log('Error loading ', e); }
-    }
-    
-    function saveUserData() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          name: currentName,
-          balance: currentBalance,
-          balanceHidden: balanceHidden
-        }));
-      } catch (e) { console.log('Error saving ', e); }
-    }
 
-    // ========== NAVEGACIÓN ENTRE PANTALLAS ==========
-    function showScreen(screenId) {
-      document.querySelectorAll('.screen').forEach(s => {
-        s.classList.remove('active', 'visible');
-        setTimeout(() => { if (!s.classList.contains('active')) s.style.display = 'none'; }, 300);
-      });
-      const target = document.getElementById(screenId);
-      target.style.display = 'flex';
-      setTimeout(() => target.classList.add('active', 'visible'), 10);
-      
-      if (screenId === 'main-screen') {
-        updateBalanceDisplay();
-        updateGreetingDisplay();
-        startCarousel();
-      }
-    }
-
-    // ========== SPLASH SCREEN ==========
-    window.addEventListener('load', () => {
-      loadUserData();
-      const splash = document.getElementById('splash-screen');
-      splash.classList.add('visible');
-      setTimeout(() => { splash.classList.add('active'); }, 50);
-      setTimeout(() => {
-        splash.style.transition = 'opacity 0.4s ease-out';
-        splash.style.opacity = '0';
-        setTimeout(() => {
-          splash.classList.remove('active', 'visible');
-          splash.style.opacity = '1';
-          splash.style.transition = '';
-          showScreen('main-screen');
-        }, 400);
-      }, 3000);
-    });
-
-    // ========== MENÚ PRINCIPAL - FUNCIONES ==========
-    function updateGreetingDisplay() {
-      document.getElementById('greetingText').textContent = `Hola, ${currentName}`;
-    }
-
-    function openEditNameModal() {
-      const modal = document.getElementById('editNameModal');
-      const input = document.getElementById('nameInput');
-      input.value = currentName;
-      modal.classList.add('active');
-      input.focus(); input.select();
-    }
-    function closeEditNameModal() { document.getElementById('editNameModal').classList.remove('active'); }
-    function saveName() {
-      const newName = document.getElementById('nameInput').value.trim();
-      if (newName) { currentName = newName; updateGreetingDisplay(); saveUserData(); }
-      closeEditNameModal();
-    }
-
-    function updateBalanceDisplay() {
-      const label = document.getElementById('balanceLabel');
-      const icon = document.getElementById('eyeIcon');
-      const value = document.getElementById('balanceValue');
-      if (balanceHidden) {
-        label.textContent = 'Mostrar saldo';
-        icon.innerHTML = '<path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/>';
-        value.textContent = '';
-      } else {
-        label.textContent = 'Ocultar saldo';
-        icon.innerHTML = '<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>';
-        value.textContent = 'S/ ' + formatNumber(currentBalance);
-      }
-    }
-
-    function toggleBalanceVisibility() { balanceHidden = !balanceHidden; updateBalanceDisplay(); saveUserData(); }
-
-    function openEditSaldoModal(e) {
-      e.stopPropagation();
-      if (balanceHidden) toggleBalanceVisibility();
-      const modal = document.getElementById('editSaldoModal');
-      const input = document.getElementById('amountInputModal');
-      input.value = currentBalance;
-      modal.classList.add('active');
-      input.focus(); input.select();
-    }
-    function closeEditSaldoModal() { document.getElementById('editSaldoModal').classList.remove('active'); }
-    function formatNumber(num) {
-      num = num.replace(/[^0-9.]/g, '');
-      if (!num) return '0.00';
-      let number = parseFloat(num);
-      if (isNaN(number)) return '0.00';
-      return number.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-    function saveAmount() {
-      currentBalance = document.getElementById('amountInputModal').value;
-      if (!balanceHidden) updateBalanceDisplay();
-      saveUserData();
-      closeEditSaldoModal();
-    }
-    document.getElementById('amountInputModal').addEventListener('input', function(e) {
-      let v = e.target.value.replace(/[^0-9.]/g, ''), p = v.split('.');
-      if (p.length > 2) v = p[0] + '.' + p.slice(1).join('');
-      e.target.value = v;
-    });
-    document.getElementById('editNameModal').addEventListener('click', e => { if (e.target === this) closeEditNameModal(); });
-    document.getElementById('editSaldoModal').addEventListener('click', e => { if (e.target === this) closeEditSaldoModal(); });
-
-    // Carrusel
-    function goToSlide(i) {
-      currentSlide = i;
-      const track = document.getElementById('carouselTrack');
-      document.querySelectorAll('.dot').forEach((d, idx) => d.classList.toggle('active', idx === i));
-      const slide = document.querySelector('.carousel-slide'), gap = 6;
-      track.style.transform = `translateX(-${i * (slide.offsetWidth + gap)}px)`;
-      resetCarouselTimer();
-    }
-    function startCarousel() {
-      clearInterval(carouselInterval);
-      carouselInterval = setInterval(() => { currentSlide = (currentSlide + 1) % totalSlides; goToSlide(currentSlide); }, 5000);
-    }
-    function resetCarouselTimer() { clearInterval(carouselInterval); startCarousel(); }
-
-    // Swipe en carrusel
-    let tSX = 0, tEX = 0;
-    document.querySelector('.carousel-container').addEventListener('touchstart', e => { tSX = e.changedTouches[0].screenX; }, {passive:true});
-    document.querySelector('.carousel-container').addEventListener('touchend', e => {
-      tEX = e.changedTouches[0].screenX;
-      if (tEX < tSX - 50) { currentSlide = (currentSlide + 1) % totalSlides; goToSlide(currentSlide); }
-      if (tEX > tSX + 50) { currentSlide = (currentSlide - 1 + totalSlides) % totalSlides; goToSlide(currentSlide); }
-    }, {passive:true});
-
-    // ========== MODAL DE CRÉDITOS ==========
-    function openCreditsModal() {
-      document.getElementById('creditsModal').classList.add('active');
-    }
-    
-    function closeCreditsModal() {
-      document.getElementById('creditsModal').classList.remove('active');
-    }
-    
-    document.getElementById('creditsModal').addEventListener('click', function(e) {
-      if (e.target === this) closeCreditsModal();
-    });
-
-    // ========== FORMULARIO DE YAPEO ==========
-    const amountInputForm = document.getElementById('amountInputForm');
-    const currencySymbolForm = document.getElementById('currencySymbolForm');
-    const errorMessage = document.getElementById('errorMessage');
-
-    const soloPunto_1 = { posX: -220, posY: 5, fontSize: 30, scale: 1 };
-    const soloPunto_2 = { posX: -280, posY: 5, fontSize: 30, scale: 1 };
-    const soloPunto_3 = { posX: -290, posY: 5, fontSize: 30, scale: 0.9 };
-    const conDecimal_1_1 = { posX: -270, posY: 5, fontSize: 30, scale: 1 };
-    const conDecimal_1_2 = { posX: -300, posY: 5, fontSize: 30, scale: 1 };
-    const conDecimal_2_1 = { posX: -300, posY: 5, fontSize: 30, scale: 1 };
-    const conDecimal_2_2 = { posX: -328, posY: 5, fontSize: 30, scale: 1 };
-    const conDecimal_3_1 = { posX: -328, posY: 5, fontSize: 30, scale: 0.9 };
-    const conDecimal_3_2 = { posX: -333, posY: 5, fontSize: 30, scale: 0.9 };
-    const symbolConfigEnteros = {
-      '0': { posX: -160, posY: 5, fontSize: 30, scale: 1 }, '1': { posX: -160, posY: 5, fontSize: 30, scale: 1 },
-      '2': { posX: -220, posY: 5, fontSize: 30, scale: 1 }, '3': { posX: -240, posY: 5, fontSize: 30, scale: 0.9 },
-      '4': { posX: -260, posY: 5, fontSize: 30, scale: 0.8 }, '5': { posX: -280, posY: 5, fontSize: 30, scale: 0.8 },
-      '6': { posX: -300, posY: 5, fontSize: 30, scale: 0.8 }
-    };
-    const soloPuntoConfig = { posX: -160, posY: 5, fontSize: 30, scale: 1 };
-
-    function sanitizeInput(value) {
-      value = value.replace(/[^0-9.]/g, '');
-      const dotCount = (value.match(/\./g) || []).length;
-      if (dotCount > 1) { const p = value.split('.'); value = p[0] + '.' + p.slice(1).join(''); }
-      if (value.startsWith('.')) value = value.substring(1);
-      const parts = value.split('.');
-      if (parts[0].length > 3) parts[0] = parts[0].slice(0, 3);
-      if (parts.length > 1 && parts[1].length > 2) parts[1] = parts[1].slice(0, 2);
-      return parts.join('.');
-    }
-
-    function getConfigForValue(value) {
-      const parts = value.split('.'), beforePoint = parts[0].length, afterPoint = parts.length > 1 ? parts[1].length : 0, hasDot = parts.length > 1;
-      if (hasDot && afterPoint === 0) {
-        if (beforePoint === 1) return soloPunto_1; if (beforePoint === 2) return soloPunto_2; if (beforePoint >= 3) return soloPunto_3;
-      }
-      if (hasDot && afterPoint > 0) {
-        const b = Math.min(beforePoint, 3), a = Math.min(afterPoint, 2);
-        if (b === 1 && a === 1) return conDecimal_1_1; if (b === 1 && a === 2) return conDecimal_1_2;
-        if (b === 2 && a === 1) return conDecimal_2_1; if (b === 2 && a === 2) return conDecimal_2_2;
-        if (b === 3 && a === 1) return conDecimal_3_1; if (b === 3 && a === 2) return conDecimal_3_2;
-      }
-      if (beforePoint === 0) return symbolConfigEnteros['0'];
-      if (beforePoint >= 6) return symbolConfigEnteros['6'];
-      return symbolConfigEnteros[String(beforePoint)] || symbolConfigEnteros['0'];
-    }
-
-    function applySymbolConfig(config) {
-      if (!config) return;
-      currencySymbolForm.style.transform = `translateX(${config.posX}%) translateY(${config.posY}px) scale(${config.scale})`;
-      currencySymbolForm.style.fontSize = config.fontSize + 'px';
-    }
-
-    function getFontSize(totalLength) {
-      if (totalLength <= 2) return '60px'; if (totalLength === 3) return '50px';
-      if (totalLength === 4) return '45px'; if (totalLength === 5) return '40px'; return '35px';
-    }
-
-    amountInputForm.addEventListener('input', function(e) {
-      let value = sanitizeInput(this.value);
-      if (value === '' || value === '.') {
-        this.placeholder = '0'; errorMessage.classList.remove('hidden');
-        applySymbolConfig(value === '.' ? soloPuntoConfig : symbolConfigEnteros['0']);
-        this.style.fontSize = '60px';
-      } else {
-        this.placeholder = '';
-        const numericValue = parseFloat(value.replace(/\./g, ''));
-        errorMessage.classList.toggle('hidden', numericValue > 0);
-        const config = getConfigForValue(value), cleanValue = value.replace(/\./g, '');
-        this.style.fontSize = getFontSize(cleanValue.length);
-        applySymbolConfig(config);
-      }
-      this.value = value;
-    });
-
-    amountInputForm.addEventListener('blur', function() {
-      if (this.value === '' || this.value === '0' || this.value === '.') {
-        this.placeholder = '0'; this.value = ''; errorMessage.classList.remove('hidden');
-        applySymbolConfig(symbolConfigEnteros['0']); this.style.fontSize = '60px';
-      }
-    });
-    amountInputForm.addEventListener('focus', function() { if (this.placeholder === '0' && this.value === '') this.value = ''; });
-
-    document.getElementById('phoneInput').addEventListener('input', function(e) { this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3); });
-
-    // VALIDACIÓN DEL FORMULARIO Y GENERACIÓN DEL COMPROBANTE
-    document.getElementById('btnYapearForm').addEventListener('click', () => {
-      const name = document.getElementById('recipientName').value.trim();
-      const amount = document.getElementById('amountInputForm').value.trim();
-      const phone = document.getElementById('phoneInput').value.trim();
-      
-      if (!name || !amount || !phone) {
-        let missingFields = [];
-        if (!name) missingFields.push('Nombre');
-        if (!amount) missingFields.push('Monto');
-        if (!phone) missingFields.push('los 3 números');
-        
-        let message = ' ';
-        if (missingFields.length === 1) {
-          message += missingFields[0] + ' ';
-        } else if (missingFields.length === 2) {
-          message += missingFields.join(' y ') + ' ';
-        } else {
-          message += missingFields.join(', ') + ' ';
+        // ========== PWA: MANIFEST DINÁMICO ==========
+        function createManifest() {
+            const manifest = {
+                name: 'Yape',
+                short_name: 'Yape',
+                description: 'Aplicación de pagos Yape',
+                start_url: location.href,
+                display: 'standalone',
+                orientation: 'portrait',
+                background_color: '#790699',
+                theme_color: '#790699',
+                icons: [{
+                    src: 'https://vectorseek.com/wp-content/uploads/2023/09/Yape-Logo-Vector.svg-.png',
+                    sizes: 'any',
+                    type: 'image/svg+xml',
+                    purpose: 'any maskable'
+                }]
+            };
+            const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+            const manifestUrl = URL.createObjectURL(blob);
+            const link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = manifestUrl;
+            document.head.appendChild(link);
         }
-        
-        showErrorModal(message);
-        return;
-      }
-      
-      if (phone.length !== 3) {
-        showErrorModal('Debes ingresar exactamente 3 números.');
-        return;
-      }
-      
-      generateReceipt();
-    });
+        createManifest();
 
-    // ========== MODAL DE ERROR ==========
-    function showErrorModal(message) {
-      document.getElementById('errorMessageText').textContent = message;
-      document.getElementById('errorModal').classList.add('active');
-    }
-    
-    function closeErrorModal() {
-      document.getElementById('errorModal').classList.remove('active');
-    }
-    
-    document.getElementById('errorModal').addEventListener('click', function(e) {
-      if (e.target === this) closeErrorModal();
-    });
+        // ========== PWA: INSTALACIÓN ==========
+        let deferredPrompt = null;
+        const installWrap = document.getElementById('installPromptWrap');
+        const installBtn = document.getElementById('installBtn');
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installWrap.classList.remove('hidden');
+        });
+        installBtn.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                installWrap.classList.add('hidden');
+                deferredPrompt = null;
+            }
+        });
+        window.addEventListener('appinstalled', () => {
+            installWrap.classList.add('hidden');
+            deferredPrompt = null;
+        });
 
-    // ========== GENERACIÓN DE COMPROBANTE EN CANVAS (PANTALLA COMPLETA) ==========
-    function generateReceipt() {
-      const name = document.getElementById('recipientName').value.trim();
-      const amount = document.getElementById('amountInputForm').value;
-      const phone = document.getElementById('phoneInput').value;
-      
-      const currencySymbol = 'S/';
-      const amountNumber = amount;
-      const formattedPhone = `*** *** ${phone.padStart(3, '0')}`;
-      
-      const now = new Date();
-      const day = now.getDate();
-      const months = ['ene.', 'feb.', 'mar.', 'abr.', 'may.', 'jun.', 'jul.', 'ago.', 'sep.', 'oct.', 'nov.', 'dic.'];
-      const month = months[now.getMonth()];
-      const year = now.getFullYear();
-      const formattedDate = `${day} ${month} ${year}`;
-      
-      let hours = now.getHours();
-      const minutes = now.getMinutes().toString().padStart(2, '0');
-      const ampm = hours >= 12 ? 'p.m.' : 'a.m.';
-      hours = hours % 12;
-      hours = hours ? hours : 12;
-      const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes} ${ampm}`;
-      
-      const rand1 = Math.floor(Math.random() * 10);
-      const rand2 = Math.floor(Math.random() * 10);
-      const rand3 = Math.floor(Math.random() * 10);
-      const operationCode = Array.from({length: 8}, () => Math.floor(Math.random() * 10)).join('');
-      
-      // ✅ NUEVA IMAGEN BASE (v4)
-      const baseImage = new Image();
-      baseImage.crossOrigin = 'Anonymous'; 
-      baseImage.src = 'https://i.ibb.co/RGCnK7wF/YAPE-BAUCHER-v4.jpg';
-      
-      baseImage.onload = function() {
-        const canvas = document.getElementById('receiptCanvas');
-        const ctx = canvas.getContext('2d');
-        
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        
-        const scale = Math.max(canvas.width / baseImage.width, canvas.height / baseImage.height);
-        const offsetX = (canvas.width - baseImage.width * scale) / 2;
-        const offsetY = (canvas.height - baseImage.height * scale) / 2;
-        
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(baseImage, 0, 0, baseImage.width, baseImage.height,
-                      offsetX, offsetY, baseImage.width * scale, baseImage.height * scale);
-        
-        ctx.save();
-        ctx.translate(offsetX, offsetY);
-        ctx.scale(scale, scale);
-        
-        // --- SÍMBOLO "S/" // Listo
-        const currencyX = 200;
-        const currencyY = 1220;
-        const currencyFontSize = 175;
-        const currencyFontWeight = 'bold';
-        const currencyColor = '#3E3854';
-        
-        // --- MONTO --- // Listo
-        const amountX = 395;  
-        const amountY = 1205;
-        const amountFontSize = 268;
-        const amountFontWeight = 'bold';
-        const amountColor = '#3E3854';
-        
-        // --- NOMBRE --- // Listo
-        const nameX = 205;
-        const nameY = 1465;
-        const nameFontSize = 120;
-        const nameFontWeight = 'bold';
-        const nameColor = '#3E3854';
-        
-        // --- FECHA --- // Listo
-        const dateX = 300;
-        const dateY = 1635;
-        const dateFontSize = 79;
-        const dateFontWeight = 'bold';
-        const dateColor = '#605D64';
-        
-        // --- HORA --- // Listo
-        const timeX = 1030;
-        const timeY = 1635;
-        const timeFontSize = 79;
-        const timeFontWeight = 'bold';
-        const timeColor = '#605D64';
-        
-        // --- NÚMEROS ALEATORIOS --- // Listo
-        const rand1X = 1610;
-        const rand1Y = 1920;
-        const rand2X = 1780;
-        const rand2Y = 1920;
-        const rand3X = 1950;
-        const rand3Y = 1920;
-        const randFontSize = 105;
-        const randFontWeight = 'bold';
-        const randColor = '#3E3854';
+        // 🔒 BLOQUEAR MENÚ CONTEXTUAL excepto canvas
+        document.addEventListener('contextmenu', function(e) {
+            if (e.target.id === 'receiptCanvas') {
+                e.preventDefault();
+                downloadReceipt();
+                return false;
+            }
+            e.preventDefault();
+            return false;
+        });
 
-        // --- TELÉFONO --- // Listo
-        const phoneX = 1695;
-        const phoneY = 2420;
-        const phoneFontSize = 74;
-        const phoneFontWeight = 'bold';
-        const phoneColor = '#3E3854';
+        // ========== VARIABLES GLOBALES MENÚ ==========
+        let currentSlide = 0,
+            totalSlides = 6,
+            balanceHidden = true,
+            currentBalance = '0',
+            currentName = 'Usuario',
+            carouselInterval;
+        const STORAGE_KEY_MENU = 'yape_fake_user_data';
 
-        // --- TEXTO "Yape" --- // Listo
-        const yapeTextX = 1890;
-        const yapeTextY = 2565; 
-        const yapeTextFontSize = 74;
-        const yapeTextColor = '#3E3854';
-        
-        // --- CÓDIGO DE OPERACIÓN --- // Listo
-        const opX = 1730;
-        const opY = 2720;
-        const opFontSize = 74;
-        const opFontWeight = 'bold';
-        const opColor = '#3E3854';
-        
-        // Dibujar "Yape"
-        ctx.font = `bold ${yapeTextFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-        ctx.fillStyle = yapeTextColor;
-        ctx.textBaseline = 'top';
-        ctx.fillText('Yape', yapeTextX, yapeTextY);
-        
-        // Dibujar símbolo "S/"
-        ctx.font = `${currencyFontWeight} ${currencyFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-        ctx.fillStyle = currencyColor;
-        ctx.fillText(currencySymbol, currencyX, currencyY);
-        
-        // Dibujar monto
-        ctx.font = `${amountFontWeight} ${amountFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-        ctx.fillStyle = amountColor;
-        ctx.fillText(amountNumber, amountX, amountY);
-        
-        // Dibujar nombre
-        ctx.font = `${nameFontWeight} ${nameFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-        ctx.fillStyle = nameColor;
-        ctx.fillText(name, nameX, nameY);
-        
-        // Dibujar teléfono
-        ctx.font = `${phoneFontWeight} ${phoneFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-        ctx.fillStyle = phoneColor;
-        ctx.fillText(formattedPhone, phoneX, phoneY);
-        
-        // Dibujar fecha
-        ctx.font = `${dateFontWeight} ${dateFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-        ctx.fillStyle = dateColor;
-        ctx.fillText(formattedDate, dateX, dateY);
-        
-        // Dibujar hora
-        ctx.fillText(formattedTime, timeX, timeY);
-        
-        // Dibujar números aleatorios
-        ctx.font = `${randFontWeight} ${randFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-        ctx.fillStyle = randColor;
-        ctx.fillText(rand1.toString(), rand1X, rand1Y);
-        ctx.fillText(rand2.toString(), rand2X, rand2Y);
-        ctx.fillText(rand3.toString(), rand3X, rand3Y);
-        
-        // Dibujar código de operación
-        ctx.font = `${opFontWeight} ${opFontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-        ctx.fillStyle = opColor;
-        ctx.fillText(operationCode, opX, opY);
-        
-        ctx.restore();
-        
-        showScreen('receipt-screen');
-      };
-    }
+        function loadUserData() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY_MENU);
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    if (data.name) currentName = data.name;
+                    if (data.balance !== undefined) currentBalance = data.balance;
+                    balanceHidden = true;
+                }
+            } catch (e) { console.log('Error loading user data', e); }
+        }
 
-    // ========== DESCARGAR COMPROBANTE (CANVAS → IMAGEN) ==========
-    function downloadReceipt() {
-      const canvas = document.getElementById('receiptCanvas');
-      if (!canvas) return;
-      
-      const dataURL = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.download = 'Yape_Comprobante.png';
-      link.href = dataURL;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
+        function saveUserData() {
+            try {
+                localStorage.setItem(STORAGE_KEY_MENU, JSON.stringify({
+                    name: currentName,
+                    balance: currentBalance,
+                    balanceHidden: balanceHidden
+                }));
+            } catch (e) { console.log('Error saving user data', e); }
+        }
 
-    // ========== VOLVER AL MENÚ PRINCIPAL ==========
-    function goBackToMenu() {
-      document.getElementById('recipientName').value = '';
-      document.getElementById('amountInputForm').value = '';
-      document.getElementById('phoneInput').value = '';
-      showScreen('main-screen');
-    }
+        // ========== NAVEGACIÓN ENTRE PANTALLAS ==========
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => {
+                s.classList.remove('active', 'visible');
+                setTimeout(() => { if (!s.classList.contains('active')) s.style.display = 'none'; }, 300);
+            });
+            const target = document.getElementById(screenId);
+            if (!target) return;
+            target.style.display = 'flex';
+            setTimeout(() => target.classList.add('active', 'visible'), 10);
 
-    // ========== MANEJO DE TOQUES EN EL COMPROBANTE ==========
-    let longPressTimer;
-    let downloadTriggered = false;
-    const receiptCanvas = document.getElementById('receiptCanvas');
-    
-    receiptCanvas.addEventListener('touchstart', function(e) {
-      downloadTriggered = false;
-      longPressTimer = setTimeout(() => {
-        downloadTriggered = true;
-        downloadReceipt();
-      }, 600);
-    });
-    
-    receiptCanvas.addEventListener('touchend', function(e) {
-      clearTimeout(longPressTimer);
-      if (!downloadTriggered) {
-        goBackToMenu();
-      }
-    });
-    
-    receiptCanvas.addEventListener('touchmove', function(e) {
-      clearTimeout(longPressTimer);
-    });
+            if (screenId === 'main-screen') {
+                updateBalanceDisplay();
+                updateGreetingDisplay();
+                startCarousel();
+                triggerMainMenuAnimations();
+            }
+        }
 
-    document.getElementById('btnYapearMain').addEventListener('click', () => showScreen('form-screen'));
-    document.getElementById('btnBackForm').addEventListener('click', () => showScreen('main-screen'));
+        // ========== ANIMACIONES DEL MENÚ PRINCIPAL ==========
+        function triggerMainMenuAnimations() {
+            const gridItems = document.querySelectorAll('#gridSection .grid-item');
+            const carouselSection = document.getElementById('carouselSection');
+            const bottomPanel = document.getElementById('bottomPanel');
 
-    // Prevención de gestos
-    document.addEventListener('gesturestart', e => e.preventDefault());
-    document.addEventListener('gesturechange', e => e.preventDefault());
-    document.addEventListener('gestureend', e => e.preventDefault());
-    document.addEventListener('scroll', () => window.scrollTo(0, window.scrollY));
-    document.addEventListener('keydown', e => { if (e.key === 'Enter' && document.activeElement === document.getElementById('recipientName')) { amountInputForm.focus(); }});
+            // Resetear animaciones
+            gridItems.forEach(item => item.classList.remove('animate-in'));
+            if (carouselSection) carouselSection.classList.remove('animate-in');
+            if (bottomPanel) bottomPanel.classList.remove('animate-in');
 
-    applySymbolConfig(symbolConfigEnteros['0']);
-  </script>
+            // Forzar reflow
+            void document.getElementById('main-screen').offsetWidth;
+
+            // Grid items: aparecen desde abajo con stagger
+            gridItems.forEach((item, index) => {
+                item.style.animationDelay = (index * 0.04) + 's';
+                item.classList.add('animate-in');
+            });
+
+            // Carrusel: aparece desde la derecha
+            if (carouselSection) {
+                carouselSection.style.animationDelay = '0.5s';
+                carouselSection.classList.add('animate-in');
+            }
+
+            // Bottom panel: slide up
+            if (bottomPanel) {
+                bottomPanel.style.animationDelay = '0.65s';
+                bottomPanel.classList.add('animate-in');
+            }
+        }
+
+        // ========== SPLASH → PIN → MENÚ ==========
+        window.addEventListener('load', () => {
+            loadUserData();
+            const splash = document.getElementById('splash-screen');
+            splash.classList.add('visible');
+            setTimeout(() => { splash.classList.add('active'); }, 50);
+
+            // Después de 3 segundos, transicionar a la pantalla de PIN
+            setTimeout(() => {
+                splash.style.transition = 'opacity 0.4s ease-out';
+                splash.style.opacity = '0';
+                setTimeout(() => {
+                    splash.classList.remove('active', 'visible');
+                    splash.style.opacity = '1';
+                    splash.style.transition = '';
+                    // Mostrar pantalla de PIN directamente
+                    showPinScreen();
+                }, 400);
+            }, 3000);
+        });
+
+        function showPinScreen() {
+            const pinScreen = document.getElementById('pin-screen');
+            pinScreen.style.display = 'flex';
+            setTimeout(() => pinScreen.classList.add('active', 'visible'), 10);
+            // El código del PIN ya inicializa todo internamente
+        }
+
+        // ========== FUNCIÓN LLAMADA CUANDO EL PIN ES EXITOSO ==========
+        function transitionToMainMenu() {
+            const pinScreen = document.getElementById('pin-screen');
+            pinScreen.style.transition = 'opacity 0.35s ease-out';
+            pinScreen.style.opacity = '0';
+            setTimeout(() => {
+                pinScreen.classList.remove('active', 'visible');
+                pinScreen.style.opacity = '1';
+                pinScreen.style.transition = '';
+                pinScreen.style.display = 'none';
+                showScreen('main-screen');
+            }, 350);
+        }
+
+        // ========== MENÚ PRINCIPAL - FUNCIONES ==========
+        function updateGreetingDisplay() {
+            document.getElementById('greetingText').textContent = `Hola, ${currentName}`;
+        }
+
+        function openEditNameModal() {
+            const modal = document.getElementById('editNameModal');
+            const input = document.getElementById('nameInput');
+            input.value = currentName;
+            modal.classList.add('active');
+            input.focus();
+            input.select();
+        }
+
+        function closeEditNameModal() { document.getElementById('editNameModal').classList.remove('active'); }
+
+        function saveName() {
+            const newName = document.getElementById('nameInput').value.trim();
+            if (newName) { currentName = newName;
+                updateGreetingDisplay();
+                saveUserData(); }
+            closeEditNameModal();
+        }
+
+        function updateBalanceDisplay() {
+            const label = document.getElementById('balanceLabel');
+            const icon = document.getElementById('eyeIcon');
+            const value = document.getElementById('balanceValue');
+            if (balanceHidden) {
+                label.textContent = 'Mostrar saldo';
+                icon.innerHTML =
+                    '<path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/>';
+                value.textContent = '';
+            } else {
+                label.textContent = 'Ocultar saldo';
+                icon.innerHTML =
+                    '<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>';
+                value.textContent = 'S/ ' + formatNumber(currentBalance);
+            }
+        }
+
+        function toggleBalanceVisibility() { balanceHidden = !balanceHidden;
+            updateBalanceDisplay();
+            saveUserData(); }
+
+        function openEditSaldoModal(e) {
+            e.stopPropagation();
+            if (balanceHidden) toggleBalanceVisibility();
+            const modal = document.getElementById('editSaldoModal');
+            const input = document.getElementById('amountInputModal');
+            input.value = currentBalance;
+            modal.classList.add('active');
+            input.focus();
+            input.select();
+        }
+
+        function closeEditSaldoModal() { document.getElementById('editSaldoModal').classList.remove('active'); }
+
+        function formatNumber(num) {
+            num = String(num).replace(/[^0-9.]/g, '');
+            if (!num) return '0.00';
+            let number = parseFloat(num);
+            if (isNaN(number)) return '0.00';
+            return number.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function saveAmount() {
+            currentBalance = document.getElementById('amountInputModal').value;
+            if (!balanceHidden) updateBalanceDisplay();
+            saveUserData();
+            closeEditSaldoModal();
+        }
+
+        document.getElementById('amountInputModal').addEventListener('input', function(e) {
+            let v = e.target.value.replace(/[^0-9.]/g, ''),
+                p = v.split('.');
+            if (p.length > 2) v = p[0] + '.' + p.slice(1).join('');
+            e.target.value = v;
+        });
+        document.getElementById('editNameModal').addEventListener('click', e => { if (e.target === document
+                .getElementById('editNameModal')) closeEditNameModal(); });
+        document.getElementById('editSaldoModal').addEventListener('click', e => { if (e.target === document
+                .getElementById('editSaldoModal')) closeEditSaldoModal(); });
+
+        // Carrusel
+        function goToSlide(i) {
+            currentSlide = i;
+            const track = document.getElementById('carouselTrack');
+            document.querySelectorAll('.carousel-dots .dot-nav').forEach((d, idx) => d.classList.toggle('active', idx ===
+                i));
+            const slide = document.querySelector('.carousel-slide'),
+                gap = 6;
+            if (slide) track.style.transform = `translateX(-${i * (slide.offsetWidth + gap)}px)`;
+            resetCarouselTimer();
+        }
+
+        function startCarousel() {
+            clearInterval(carouselInterval);
+            carouselInterval = setInterval(() => { currentSlide = (currentSlide + 1) % totalSlides;
+                goToSlide(currentSlide); }, 5000);
+        }
+
+        function resetCarouselTimer() { clearInterval(carouselInterval);
+            startCarousel(); }
+
+        // Swipe carrusel
+        let tSX = 0,
+            tEX = 0;
+        const carouselContainer = document.querySelector('.carousel-container');
+        if (carouselContainer) {
+            carouselContainer.addEventListener('touchstart', e => { tSX = e.changedTouches[0].screenX; }, { passive: true });
+            carouselContainer.addEventListener('touchend', e => {
+                tEX = e.changedTouches[0].screenX;
+                if (tEX < tSX - 50) { currentSlide = (currentSlide + 1) % totalSlides;
+                    goToSlide(currentSlide); }
+                if (tEX > tSX + 50) { currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+                    goToSlide(currentSlide); }
+            }, { passive: true });
+        }
+
+        // ========== MODAL DE CRÉDITOS ==========
+        function openCreditsModal() { document.getElementById('creditsModal').classList.add('active'); }
+
+        function closeCreditsModal() { document.getElementById('creditsModal').classList.remove('active'); }
+        document.getElementById('creditsModal').addEventListener('click', function(e) { if (e.target === this)
+                closeCreditsModal(); });
+
+        // ========== FORMULARIO DE YAPEO ==========
+        const amountInputForm = document.getElementById('amountInputForm');
+        const currencySymbolForm = document.getElementById('currencySymbolForm');
+        const errorMessageForm = document.getElementById('errorMessage');
+
+        const soloPunto_1 = { posX: -220, posY: 5, fontSize: 30, scale: 1 };
+        const soloPunto_2 = { posX: -280, posY: 5, fontSize: 30, scale: 1 };
+        const soloPunto_3 = { posX: -290, posY: 5, fontSize: 30, scale: 0.9 };
+        const conDecimal_1_1 = { posX: -270, posY: 5, fontSize: 30, scale: 1 };
+        const conDecimal_1_2 = { posX: -300, posY: 5, fontSize: 30, scale: 1 };
+        const conDecimal_2_1 = { posX: -300, posY: 5, fontSize: 30, scale: 1 };
+        const conDecimal_2_2 = { posX: -328, posY: 5, fontSize: 30, scale: 1 };
+        const conDecimal_3_1 = { posX: -328, posY: 5, fontSize: 30, scale: 0.9 };
+        const conDecimal_3_2 = { posX: -333, posY: 5, fontSize: 30, scale: 0.9 };
+        const symbolConfigEnteros = {
+            '0': { posX: -160, posY: 5, fontSize: 30, scale: 1 },
+            '1': { posX: -160, posY: 5, fontSize: 30, scale: 1 },
+            '2': { posX: -220, posY: 5, fontSize: 30, scale: 1 },
+            '3': { posX: -240, posY: 5, fontSize: 30, scale: 0.9 },
+            '4': { posX: -260, posY: 5, fontSize: 30, scale: 0.8 },
+            '5': { posX: -280, posY: 5, fontSize: 30, scale: 0.8 },
+            '6': { posX: -300, posY: 5, fontSize: 30, scale: 0.8 }
+        };
+        const soloPuntoConfig = { posX: -160, posY: 5, fontSize: 30, scale: 1 };
+
+        function sanitizeInput(value) {
+            value = value.replace(/[^0-9.]/g, '');
+            const dotCount = (value.match(/\./g) || []).length;
+            if (dotCount > 1) { const p = value.split('.');
+                value = p[0] + '.' + p.slice(1).join(''); }
+            if (value.startsWith('.')) value = value.substring(1);
+            const parts = value.split('.');
+            if (parts[0].length > 3) parts[0] = parts[0].slice(0, 3);
+            if (parts.length > 1 && parts[1].length > 2) parts[1] = parts[1].slice(0, 2);
+            return parts.join('.');
+        }
+
+        function getConfigForValue(value) {
+            const parts = value.split('.'),
+                beforePoint = parts[0].length,
+                afterPoint = parts.length > 1 ? parts[1].length : 0,
+                hasDot = parts.length > 1;
+            if (hasDot && afterPoint === 0) {
+                if (beforePoint === 1) return soloPunto_1;
+                if (beforePoint === 2) return soloPunto_2;
+                if (beforePoint >= 3) return soloPunto_3;
+            }
+            if (hasDot && afterPoint > 0) {
+                const b = Math.min(beforePoint, 3),
+                    a = Math.min(afterPoint, 2);
+                if (b === 1 && a === 1) return conDecimal_1_1;
+                if (b === 1 && a === 2) return conDecimal_1_2;
+                if (b === 2 && a === 1) return conDecimal_2_1;
+                if (b === 2 && a === 2) return conDecimal_2_2;
+                if (b === 3 && a === 1) return conDecimal_3_1;
+                if (b === 3 && a === 2) return conDecimal_3_2;
+            }
+            if (beforePoint === 0) return symbolConfigEnteros['0'];
+            if (beforePoint >= 6) return symbolConfigEnteros['6'];
+            return symbolConfigEnteros[String(beforePoint)] || symbolConfigEnteros['0'];
+        }
+
+        function applySymbolConfig(config) {
+            if (!config) return;
+            currencySymbolForm.style.transform =
+                `translateX(${config.posX}%) translateY(${config.posY}px) scale(${config.scale})`;
+            currencySymbolForm.style.fontSize = config.fontSize + 'px';
+        }
+
+        function getFontSize(totalLength) {
+            if (totalLength <= 2) return '60px';
+            if (totalLength === 3) return '50px';
+            if (totalLength === 4) return '45px';
+            if (totalLength === 5) return '40px';
+            return '35px';
+        }
+
+        if (amountInputForm) {
+            amountInputForm.addEventListener('input', function(e) {
+                let value = sanitizeInput(this.value);
+                if (value === '' || value === '.') {
+                    this.placeholder = '0';
+                    errorMessageForm.classList.remove('hidden');
+                    applySymbolConfig(value === '.' ? soloPuntoConfig : symbolConfigEnteros['0']);
+                    this.style.fontSize = '60px';
+                } else {
+                    this.placeholder = '';
+                    const numericValue = parseFloat(value.replace(/\./g, ''));
+                    errorMessageForm.classList.toggle('hidden', numericValue > 0);
+                    const config = getConfigForValue(value),
+                        cleanValue = value.replace(/\./g, '');
+                    this.style.fontSize = getFontSize(cleanValue.length);
+                    applySymbolConfig(config);
+                }
+                this.value = value;
+            });
+            amountInputForm.addEventListener('blur', function() {
+                if (this.value === '' || this.value === '0' || this.value === '.') {
+                    this.placeholder = '0';
+                    this.value = '';
+                    errorMessageForm.classList.remove('hidden');
+                    applySymbolConfig(symbolConfigEnteros['0']);
+                    this.style.fontSize = '60px';
+                }
+            });
+            amountInputForm.addEventListener('focus', function() { if (this.placeholder === '0' && this.value === '')
+                    this.value = ''; });
+        }
+
+        const phoneInput = document.getElementById('phoneInput');
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function(e) { this.value = this.value.replace(/[^0-9]/g, '').slice(0,
+                3); });
+        }
+
+        // Validación formulario y generación comprobante
+        document.getElementById('btnYapearForm').addEventListener('click', () => {
+            const name = document.getElementById('recipientName').value.trim();
+            const amount = document.getElementById('amountInputForm').value.trim();
+            const phone = document.getElementById('phoneInput').value.trim();
+            if (!name || !amount || !phone) {
+                let missingFields = [];
+                if (!name) missingFields.push('Nombre');
+                if (!amount) missingFields.push('Monto');
+                if (!phone) missingFields.push('los 3 números');
+                let message = 'Debes completar: ';
+                if (missingFields.length === 1) message += missingFields[0];
+                else if (missingFields.length === 2) message += missingFields.join(' y ');
+                else message += missingFields.join(', ');
+                showErrorModal(message);
+                return;
+            }
+            if (phone.length !== 3) { showErrorModal('Debes ingresar exactamente 3 números.'); return; }
+            generateReceipt();
+        });
+
+        // ========== MODAL DE ERROR ==========
+        function showErrorModal(message) {
+            document.getElementById('errorMessageText').textContent = message;
+            document.getElementById('errorModal').classList.add('active');
+        }
+
+        function closeErrorModal() { document.getElementById('errorModal').classList.remove('active'); }
+        document.getElementById('errorModal').addEventListener('click', function(e) { if (e.target === this)
+                closeErrorModal(); });
+
+        // ========== GENERACIÓN DE COMPROBANTE (CANVAS) ==========
+        function generateReceipt() {
+            const name = document.getElementById('recipientName').value.trim();
+            const amount = document.getElementById('amountInputForm').value;
+            const phone = document.getElementById('phoneInput').value;
+            const currencySymbol = 'S/';
+            const amountNumber = amount;
+            const formattedPhone = `*** *** ${phone.padStart(3, '0')}`;
+            const now = new Date();
+            const day = now.getDate();
+            const months = ['ene.', 'feb.', 'mar.', 'abr.', 'may.', 'jun.', 'jul.', 'ago.', 'sep.', 'oct.', 'nov.', 'dic.'];
+            const month = months[now.getMonth()];
+            const year = now.getFullYear();
+            const formattedDate = `${day} ${month} ${year}`;
+            let hours = now.getHours();
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const ampm = hours >= 12 ? 'p.m.' : 'a.m.';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes} ${ampm}`;
+            const rand1 = Math.floor(Math.random() * 10);
+            const rand2 = Math.floor(Math.random() * 10);
+            const rand3 = Math.floor(Math.random() * 10);
+            const operationCode = Array.from({ length: 8 }, () => Math.floor(Math.random() * 10)).join('');
+
+            const baseImage = new Image();
+            baseImage.crossOrigin = 'Anonymous';
+            baseImage.src = 'https://i.ibb.co/RGCnK7wF/YAPE-BAUCHER-v4.jpg';
+
+            baseImage.onload = function() {
+                const canvas = document.getElementById('receiptCanvas');
+                const ctx = canvas.getContext('2d');
+                const dpr = window.devicePixelRatio || 1;
+
+                // Usar resolución nativa para máxima nitidez
+                canvas.width = window.innerWidth * dpr;
+                canvas.height = window.innerHeight * dpr;
+                canvas.style.width = window.innerWidth + 'px';
+                canvas.style.height = window.innerHeight + 'px';
+                ctx.scale(dpr, dpr);
+
+                // Activar suavizado de alta calidad
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+
+                const scale = Math.max(window.innerWidth / baseImage.width, window.innerHeight / baseImage.height);
+                const offsetX = (window.innerWidth - baseImage.width * scale) / 2;
+                const offsetY = (window.innerHeight - baseImage.height * scale) / 2;
+
+                ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+                ctx.drawImage(baseImage, 0, 0, baseImage.width, baseImage.height,
+                    offsetX, offsetY, baseImage.width * scale, baseImage.height * scale);
+
+                ctx.save();
+                ctx.translate(offsetX, offsetY);
+                ctx.scale(scale, scale);
+
+                // Símbolo "S/"
+                ctx.font = 'bold 175px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                ctx.fillStyle = '#3E3854';
+                ctx.fillText(currencySymbol, 200, 1220);
+
+                // Monto
+                ctx.font = 'bold 268px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                ctx.fillStyle = '#3E3854';
+                ctx.fillText(amountNumber, 395, 1205);
+
+                // Nombre
+                ctx.font = 'bold 120px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                ctx.fillStyle = '#3E3854';
+                ctx.fillText(name, 205, 1465);
+
+                // Fecha
+                ctx.font = 'bold 79px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                ctx.fillStyle = '#605D64';
+                ctx.fillText(formattedDate, 300, 1635);
+
+                // Hora
+                ctx.fillText(formattedTime, 1030, 1635);
+
+                // Números aleatorios
+                ctx.font = 'bold 105px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                ctx.fillStyle = '#3E3854';
+                ctx.fillText(rand1.toString(), 1610, 1920);
+                ctx.fillText(rand2.toString(), 1780, 1920);
+                ctx.fillText(rand3.toString(), 1950, 1920);
+
+                // Teléfono
+                ctx.font = 'bold 74px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                ctx.fillStyle = '#3E3854';
+                ctx.fillText(formattedPhone, 1695, 2420);
+
+                // "Yape"
+                ctx.fillText('Yape', 1890, 2565);
+
+                // Código de operación
+                ctx.fillText(operationCode, 1730, 2720);
+
+                ctx.restore();
+                showScreen('receipt-screen');
+            };
+        }
+
+        // ========== DESCARGAR COMPROBANTE ==========
+        function downloadReceipt() {
+            const canvas = document.getElementById('receiptCanvas');
+            if (!canvas) return;
+            const dataURL = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = 'Yape_Comprobante.png';
+            link.href = dataURL;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // ========== VOLVER AL MENÚ ==========
+        function goBackToMenu() {
+            document.getElementById('recipientName').value = '';
+            document.getElementById('amountInputForm').value = '';
+            document.getElementById('phoneInput').value = '';
+            showScreen('main-screen');
+        }
+
+        // ========== MANEJO DE TOQUES EN COMPROBANTE ==========
+        let longPressTimer;
+        let downloadTriggered = false;
+        const receiptCanvas = document.getElementById('receiptCanvas');
+        receiptCanvas.addEventListener('touchstart', function(e) {
+            downloadTriggered = false;
+            longPressTimer = setTimeout(() => { downloadTriggered = true;
+                downloadReceipt(); }, 600);
+        });
+        receiptCanvas.addEventListener('touchend', function(e) {
+            clearTimeout(longPressTimer);
+            if (!downloadTriggered) { goBackToMenu(); }
+        });
+        receiptCanvas.addEventListener('touchmove', function(e) { clearTimeout(longPressTimer); });
+
+        document.getElementById('btnYapearMain').addEventListener('click', () => showScreen('form-screen'));
+        document.getElementById('btnBackForm').addEventListener('click', () => showScreen('main-screen'));
+
+        // Prevención de gestos
+        document.addEventListener('gesturestart', e => e.preventDefault());
+        document.addEventListener('gesturechange', e => e.preventDefault());
+        document.addEventListener('gestureend', e => e.preventDefault());
+        document.addEventListener('keydown', e => { if (e.key === 'Enter' && document.activeElement === document
+                .getElementById('recipientName')) { document.getElementById('amountInputForm').focus(); } });
+
+        if (currencySymbolForm && symbolConfigEnteros['0']) applySymbolConfig(symbolConfigEnteros['0']);
+
+        // ========== CÓDIGO DEL PIN / TECLADO ==========
+        (function() {
+            const dotsContainer = document.getElementById('dotsContainer');
+            const dots = dotsContainer.querySelectorAll('.dot');
+            const mainTitle = document.getElementById('mainTitle');
+            const subtitle = document.getElementById('subtitle');
+            const stepIndicator = document.getElementById('stepIndicator');
+            const stepDot1 = document.getElementById('stepDot1');
+            const stepDot2 = document.getElementById('stepDot2');
+            const lockContainer = document.getElementById('lockContainer');
+            const lockBody = document.getElementById('lockBody');
+            const lockShackle = document.getElementById('lockShackle');
+            const passwordBadge = document.getElementById('passwordBadge');
+            const toast = document.getElementById('toast');
+            const keypadContainer = document.getElementById('keypadContainer');
+
+            const MAX_DIGITS = 6;
+            let currentPin = '';
+            let tempPin = '';
+            let state = 'login';
+            let isProcessing = false;
+            let toastTimer = null;
+            const STORAGE_KEY_PIN = 'yapePinV2';
+
+            function getSavedPin() {
+                try { return localStorage.getItem(STORAGE_KEY_PIN); } catch (e) { return null; }
+            }
+
+            function savePin(pin) {
+                try { localStorage.setItem(STORAGE_KEY_PIN, pin); return true; } catch (e) {
+                    showToast('Error al guardar. Intenta de nuevo.', 'error'); return false; }
+            }
+
+            function shuffleArray(arr) {
+                for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));
+                    [arr[i], arr[j]] = [arr[j], arr[i]]; }
+                return arr;
+            }
+
+            function buildKeypad() {
+                const digits = shuffleArray([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+                const fragment = document.createDocumentFragment();
+                digits.forEach(digit => {
+                    const keyDiv = document.createElement('div');
+                    keyDiv.className = 'key';
+                    keyDiv.textContent = digit;
+                    keyDiv.setAttribute('data-digit', digit);
+                    keyDiv.addEventListener('click', () => pressKey(digit.toString()));
+                    keyDiv.addEventListener('touchend', (e) => { e.preventDefault();
+                        pressKey(digit.toString()); });
+                    fragment.appendChild(keyDiv);
+                });
+                const emptyDiv = document.createElement('div');
+                emptyDiv.style.gridColumn = '1';
+                fragment.appendChild(emptyDiv);
+                const zeroDiv = document.createElement('div');
+                zeroDiv.className = 'key key-zero';
+                zeroDiv.textContent = '0';
+                zeroDiv.addEventListener('click', () => pressKey('0'));
+                zeroDiv.addEventListener('touchend', (e) => { e.preventDefault();
+                    pressKey('0'); });
+                fragment.appendChild(zeroDiv);
+                const deleteDiv = document.createElement('div');
+                deleteDiv.className = 'key-delete';
+                deleteDiv.innerHTML =
+                    '<svg class="delete-icon" viewBox="0 0 24 24"><path d="M22,3H7C6.31,3 5.77,3.35 5.41,3.88L0,12L5.41,20.11C5.77,20.64 6.31,21 7,21H22A2,2 0 0,0 24,19V5A2,2 0 0,0 22,3M19,15.59L17.59,17L14,13.41L10.41,17L9,15.59L12.59,12L9,8.41L10.41,7L14,10.59L17.59,7L19,8.41L15.41,12L19,15.59Z" /></svg>';
+                deleteDiv.addEventListener('click', deleteKey);
+                deleteDiv.addEventListener('touchend', (e) => { e.preventDefault();
+                    deleteKey(); });
+                fragment.appendChild(deleteDiv);
+                keypadContainer.innerHTML = '';
+                keypadContainer.appendChild(fragment);
+            }
+
+            function updateDots() {
+                dots.forEach((dot, index) => {
+                    dot.classList.remove('success-dot', 'error-dot');
+                    if (index < currentPin.length) dot.classList.add('filled');
+                    else dot.classList.remove('filled');
+                });
+            }
+
+            function clearDots() {
+                currentPin = '';
+                dots.forEach(dot => dot.classList.remove('filled', 'success-dot', 'error-dot'));
+            }
+
+            function setAllDotsClass(className) {
+                dots.forEach(dot => dot.classList.add(className));
+                setTimeout(() => dots.forEach(dot => dot.classList.remove(className)), 1200);
+            }
+
+            function shakeDots() {
+                dotsContainer.classList.remove('shaking');
+                void dotsContainer.offsetWidth;
+                dotsContainer.classList.add('shaking');
+                setTimeout(() => dotsContainer.classList.remove('shaking'), 500);
+            }
+
+            function pulseDots() {
+                dotsContainer.classList.remove('pulse-success');
+                void dotsContainer.offsetWidth;
+                dotsContainer.classList.add('pulse-success');
+                setTimeout(() => dotsContainer.classList.remove('pulse-success'), 600);
+            }
+
+            function showToast(message, type) {
+                if (toastTimer) clearTimeout(toastTimer);
+                toast.textContent = message;
+                toast.className = 'toast';
+                if (type === 'success') toast.classList.add('success-toast');
+                if (type === 'error') toast.classList.add('error-toast');
+                void toast.offsetWidth;
+                toast.classList.add('show');
+                toastTimer = setTimeout(() => { toast.classList.remove('show');
+                    toastTimer = null; }, 2200);
+            }
+
+            function setSubtitle(text, type) {
+                subtitle.textContent = text;
+                subtitle.classList.remove('error-text', 'success-text');
+                if (type === 'error') subtitle.classList.add('error-text');
+                if (type === 'success') subtitle.classList.add('success-text');
+            }
+
+            function resetSubtitle() {
+                subtitle.classList.remove('error-text', 'success-text');
+                if (state === 'create-step1') subtitle.textContent = 'Clave de 6 dígitos';
+                else if (state === 'create-step2') subtitle.textContent = 'Repite tu clave de 6 dígitos';
+                else subtitle.textContent = 'Clave de 6 dígitos';
+            }
+
+            function updateStepIndicator() {
+                if (state === 'create-step1') {
+                    stepIndicator.classList.add('visible');
+                    stepDot1.classList.add('active-step');
+                    stepDot1.classList.remove('done-step');
+                    stepDot2.classList.remove('active-step', 'done-step');
+                } else if (state === 'create-step2') {
+                    stepIndicator.classList.add('visible');
+                    stepDot1.classList.remove('active-step');
+                    stepDot1.classList.add('done-step');
+                    stepDot2.classList.add('active-step');
+                    stepDot2.classList.remove('done-step');
+                } else {
+                    stepIndicator.classList.remove('visible');
+                    stepDot1.classList.remove('active-step', 'done-step');
+                    stepDot2.classList.remove('active-step', 'done-step');
+                }
+            }
+
+            function animateLockSuccess() {
+                lockBody.classList.add('success-lock');
+                lockShackle.classList.add('success-shackle');
+                lockContainer.classList.add('unlocked');
+                passwordBadge.classList.add('active-badge');
+                setTimeout(() => {
+                    lockBody.classList.remove('success-lock');
+                    lockShackle.classList.remove('success-shackle');
+                    lockContainer.classList.remove('unlocked');
+                    passwordBadge.classList.remove('active-badge');
+                }, 1800);
+            }
+
+            function animateLockError() {
+                lockBody.classList.add('error-lock');
+                lockShackle.classList.add('error-shackle');
+                setTimeout(() => {
+                    lockBody.classList.remove('error-lock');
+                    lockShackle.classList.remove('error-shackle');
+                }, 900);
+            }
+
+            function fadeTransition(callback) {
+                mainTitle.style.opacity = '0.4';
+                mainTitle.style.transform = 'translateY(-6px)';
+                setTimeout(() => {
+                    if (callback) callback();
+                    mainTitle.style.opacity = '1';
+                    mainTitle.style.transform = 'translateY(0)';
+                }, 180);
+            }
+
+            function handleComplete() {
+                if (isProcessing) return;
+                isProcessing = true;
+
+                if (state === 'create-step1') {
+                    tempPin = currentPin;
+                    currentPin = '';
+                    state = 'create-step2';
+                    fadeTransition(() => {
+                        mainTitle.textContent = 'Confirma tu clave Yape';
+                        resetSubtitle();
+                        updateStepIndicator();
+                    });
+                    updateDots();
+                    isProcessing = false;
+                } else if (state === 'create-step2') {
+                    if (currentPin === tempPin) {
+                        const saved = savePin(currentPin);
+                        if (saved) {
+                            setAllDotsClass('success-dot');
+                            pulseDots();
+                            animateLockSuccess();
+                            setSubtitle('Clave creada correctamente', 'success');
+                            showToast('Clave guardada exitosamente', 'success');
+                            currentPin = '';
+                            tempPin = '';
+                            state = 'login';
+                            updateStepIndicator();
+                            updateDots();
+                            setTimeout(() => {
+                                fadeTransition(() => {
+                                    mainTitle.textContent = 'Ingresa tu clave Yape';
+                                    resetSubtitle();
+                                    updateStepIndicator();
+                                });
+                                isProcessing = false;
+                                // Transicionar al menú principal
+                                setTimeout(() => transitionToMainMenu(), 800);
+                            }, 1600);
+                        } else {
+                            setAllDotsClass('error-dot');
+                            shakeDots();
+                            animateLockError();
+                            setSubtitle('Error al guardar. Reintenta.', 'error');
+                            showToast('No se pudo guardar la clave', 'error');
+                            currentPin = '';
+                            tempPin = '';
+                            state = 'create-step1';
+                            fadeTransition(() => {
+                                mainTitle.textContent = 'Crea tu clave Yape';
+                                resetSubtitle();
+                                updateStepIndicator();
+                            });
+                            updateDots();
+                            setTimeout(() => { isProcessing = false;
+                                resetSubtitle(); }, 1500);
+                        }
+                    } else {
+                        setAllDotsClass('error-dot');
+                        shakeDots();
+                        animateLockError();
+                        setSubtitle('Las claves no coinciden', 'error');
+                        showToast('Las claves no coinciden', 'error');
+                        currentPin = '';
+                        tempPin = '';
+                        state = 'create-step1';
+                        fadeTransition(() => {
+                            mainTitle.textContent = 'Crea tu clave Yape';
+                            resetSubtitle();
+                            updateStepIndicator();
+                        });
+                        updateDots();
+                        setTimeout(() => { isProcessing = false;
+                            resetSubtitle(); }, 1600);
+                    }
+                } else if (state === 'login') {
+                    const savedPin = getSavedPin();
+                    if (currentPin === savedPin) {
+                        setAllDotsClass('success-dot');
+                        pulseDots();
+                        animateLockSuccess();
+                        setSubtitle('Clave correcta | Acceso concedido', 'success');
+                        showToast('Acceso concedido', 'success');
+                        currentPin = '';
+                        updateDots();
+                        setTimeout(() => {
+                            resetSubtitle();
+                            isProcessing = false;
+                            // Transicionar al menú principal
+                            transitionToMainMenu();
+                        }, 1200);
+                    } else {
+                        setAllDotsClass('error-dot');
+                        shakeDots();
+                        animateLockError();
+                        setSubtitle('Clave incorrecta. Intenta de nuevo.', 'error');
+                        showToast('Clave incorrecta', 'error');
+                        currentPin = '';
+                        updateDots();
+                        setTimeout(() => { resetSubtitle();
+                            isProcessing = false; }, 1400);
+                    }
+                }
+            }
+
+            function pressKey(number) {
+                if (isProcessing) return;
+                if (currentPin.length < MAX_DIGITS) {
+                    currentPin += number;
+                    updateDots();
+                    if (currentPin.length === MAX_DIGITS) setTimeout(() => handleComplete(), 280);
+                }
+            }
+
+            function deleteKey() {
+                if (isProcessing) return;
+                if (currentPin.length > 0) {
+                    currentPin = currentPin.slice(0, -1);
+                    updateDots();
+                    if (subtitle.classList.contains('error-text') || subtitle.classList.contains('success-text'))
+                        resetSubtitle();
+                } else if (state === 'create-step2' && currentPin.length === 0 && !isProcessing) {
+                    tempPin = '';
+                    state = 'create-step1';
+                    fadeTransition(() => {
+                        mainTitle.textContent = 'Crea tu clave Yape';
+                        resetSubtitle();
+                        updateStepIndicator();
+                    });
+                    updateDots();
+                }
+            }
+
+            function handlePhysicalKeydown(e) {
+                if (isProcessing) return;
+                const key = e.key;
+                if (/^[0-9]$/.test(key)) { e.preventDefault();
+                    pressKey(key); } else if (key === 'Backspace' || key === 'Delete') { e.preventDefault();
+                    deleteKey(); }
+            }
+
+            function initPin() {
+                buildKeypad();
+                const savedPin = getSavedPin();
+                if (!savedPin) {
+                    state = 'create-step1';
+                    mainTitle.textContent = 'Crea tu clave Yape';
+                    subtitle.textContent = 'Clave de 6 dígitos';
+                    updateStepIndicator();
+                } else {
+                    state = 'login';
+                    mainTitle.textContent = 'Ingresa tu clave Yape';
+                    subtitle.textContent = 'Clave de 6 dígitos';
+                    updateStepIndicator();
+                }
+                currentPin = '';
+                tempPin = '';
+                updateDots();
+                isProcessing = false;
+                document.addEventListener('keydown', handlePhysicalKeydown);
+            }
+
+            // Exponer funciones globales para compatibilidad
+            window.pressKey = pressKey;
+            window.deleteKey = deleteKey;
+            initPin();
+        })();
+    </script>
 </body>
 </html>
